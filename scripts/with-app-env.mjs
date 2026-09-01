@@ -21,6 +21,7 @@
  */
 import { spawn } from "node:child_process";
 import { readFileSync, realpathSync } from "node:fs";
+import { createRequire } from "node:module";
 import { constants as osConstants } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -104,6 +105,32 @@ export function isMainModule(moduleUrl) {
   }
 }
 
+/**
+ * Absolute path to a local dependency's JS bin entry, or `null` when `command`
+ * is not a resolvable package (a system binary such as `node`).
+ *
+ * Windows cannot exec the extensionless `node_modules/.bin/<cmd>` shim npm
+ * writes, and Node refuses to spawn the sibling `.cmd` without a shell — so
+ * `spawn("vite", …)` died with `ENOENT` and `npm run dev` never started there.
+ *
+ * Running the package's own entry under this Node fixes it *without* a shell,
+ * which matters: `shell: true` would make cmd.exe the direct child, so the
+ * signals forwarded below would stop the shell and orphan the dev server, and
+ * `exitStatusFromChild` would report the shell's status rather than Vite's.
+ * On Linux this is simply one less layer of indirection.
+ */
+export function resolveLocalBin(command, root = projectRoot()) {
+  try {
+    const require = createRequire(join(root, "package.json"));
+    const manifestPath = require.resolve(`${command}/package.json`);
+    const { bin } = JSON.parse(readFileSync(manifestPath, "utf8"));
+    const entry = typeof bin === "string" ? bin : bin?.[command];
+    return entry ? join(dirname(manifestPath), entry) : null;
+  } catch {
+    return null;
+  }
+}
+
 function main(argv) {
   const [command, ...args] = argv;
   if (!command) {
@@ -111,7 +138,10 @@ function main(argv) {
     process.exit(2);
   }
   const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
-  const child = spawn(command, args, { stdio: "inherit", env });
+  const localBin = resolveLocalBin(command);
+  const child = localBin
+    ? spawn(process.execPath, [localBin, ...args], { stdio: "inherit", env })
+    : spawn(command, args, { stdio: "inherit", env });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => child.kill(signal));

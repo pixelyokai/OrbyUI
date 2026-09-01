@@ -41,23 +41,15 @@ the shader inlined. There is no build step and nothing to `npm install`.
 ```bash
 npm install
 npm run dev          # http://localhost:8080
-```
-
-> **On Windows, `npm run dev` currently fails** with `spawn vite ENOENT`.
-> `scripts/with-app-env.mjs` calls `spawn("vite", …)` without a shell, and Node
-> on Windows can't execute the extensionless `vite` shim. Until that's patched,
-> run Vite directly with the same environment the wrapper injects:
->
-> ```bash
-> VITE_AUTH_ENABLED=false npx vite dev --host 127.0.0.1 --port 8080
-> ```
-
-```bash
 npm run build        # production build
 npm run typecheck    # tsc --noEmit
 npm test             # node:test
 npm run lint         # eslint
 ```
+
+Works on Windows, macOS and Linux. `dev`, `build` and `preview` all route
+through `scripts/with-app-env.mjs`, which merges `.grok/app-env.json` into the
+environment so the dev server and the build can never disagree about a flag.
 
 ---
 
