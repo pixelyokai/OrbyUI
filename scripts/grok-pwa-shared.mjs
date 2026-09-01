@@ -91,8 +91,8 @@ function isVercelSystemHost(host) {
   );
 }
 
-/** Hostname suitable for absolute og:image URLs. Preview guests (X-Forwarded-Host) are allowed. */
-export function publicAppHost(hostHeader) {
+/** Normalised hostname, or "" when the value can't be one. No policy applied. */
+function normaliseHost(hostHeader) {
   const host = String(hostHeader ?? "")
     .split(",")[0]
     .trim()
@@ -100,8 +100,28 @@ export function publicAppHost(hostHeader) {
     .toLowerCase();
   if (!host || !/^[a-z0-9.-]+$/.test(host) || !host.includes(".")) return "";
   if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return "";
-  if (isVercelSystemHost(host)) return "";
   return host;
+}
+
+/** Hostname suitable for absolute og:image URLs. Preview guests (X-Forwarded-Host) are allowed. */
+export function publicAppHost(hostHeader) {
+  const host = normaliseHost(hostHeader);
+  if (!host || isVercelSystemHost(host)) return "";
+  return host;
+}
+
+/**
+ * A hostname the deployer configured explicitly, trusted as-is.
+ *
+ * `publicAppHost` drops every `*.vercel.app` host because a *request* Host of
+ * that shape is a generated preview deployment, whose assets sit behind SSO.
+ * That heuristic also silently suppressed og:image on a project whose real
+ * production domain is `<project>.vercel.app`, where the card is public.
+ * Setting `VITE_PUBLIC_HOSTNAME` is a deliberate act, so it skips the
+ * heuristic; anything arriving in a request header still goes through it.
+ */
+export function configuredAppHost(hostHeader) {
+  return normaliseHost(hostHeader);
 }
 
 /**
@@ -112,7 +132,8 @@ export function publicAppHost(hostHeader) {
  */
 export function resolvePublicHost(hostHeader) {
   return (
-    publicAppHost(process.env?.VITE_PUBLIC_HOSTNAME) || publicAppHost(hostHeader)
+    configuredAppHost(process.env?.VITE_PUBLIC_HOSTNAME) ||
+    publicAppHost(hostHeader)
   );
 }
 
