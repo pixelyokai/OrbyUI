@@ -7,7 +7,7 @@ with **no runtime dependencies**.
 
 Pick a style, material and mood, tune the shader by hand, and copy a
 self-contained component straight into your project. Nothing to install, no
-package to track — the export is a single file.
+package to track. The export is a single file.
 
 ---
 
@@ -16,10 +16,10 @@ package to track — the export is a single file.
 - **Four orb styles** — Volume, Halo, Plasma, Iris
 - **Nine materials** — Energy, Grain, Glass, Frost, Metal, Silk, Liquid, Dither, ASCII
 - **Eight presets** — Lumen, Nova, Aurora, Ember, Tide, Prism, Void, Pulse
-- **Four states** — Idle, Listen, Think, Speak, each with its own tempo
-- **Direct shader control** — glow, bloom, chromatic aberration, refraction,
+- **Four states** — Idle, Listen, Think, Speak, each with its own tempo that you can configure
+- **Direct shader control** — glow, glass, bloom, chromatic aberration, refraction,
   dispersion, fresnel, noise algorithm, iridescence, pointer follow
-- **Light and dark themes**, driven by one shared design-token layer
+- **Motion control** — speed, rotation, distortion, noise speed
 - **Your settings persist** to `localStorage` and rehydrate on return
 
 ### Export formats
