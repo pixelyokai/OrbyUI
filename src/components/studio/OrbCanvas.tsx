@@ -80,6 +80,9 @@ export const OrbCanvas = memo(function OrbCanvas() {
     return () => {
       cancelled = true;
       unsub();
+      // Reads .current deliberately — null on unmount is what separates
+      // "destroy" from "same canvas, just pause".
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       if (liveRenderer && liveRenderer.canvas !== canvasRef.current) {
         liveRenderer.destroy();
         liveRenderer = null;

@@ -3,12 +3,8 @@ import { useTheme } from "@/lib/theme";
 import "sonner/dist/styles.css";
 
 /**
- * Toasts traced from the "Toasters / Light" and "Toasters / Dark" artboards.
- *
- * The two themes are not a tint of one another — light uses a pale fill with
- * coloured text (emerald-600 / red-500), dark uses a near-black fill with
- * neutral-50 text and a brighter icon. So the palette is declared per theme
- * rather than derived.
+ * Toasts traced from the Toasters artboards. The themes are not tints of one
+ * another, so each palette is declared rather than derived.
  */
 const ICON_PATHS = {
   success:

@@ -99,7 +99,6 @@ const Slider = memo(function Slider({
     return () => {
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

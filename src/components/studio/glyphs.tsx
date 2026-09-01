@@ -1,12 +1,8 @@
 import type { SVGProps } from "react";
 
 /**
- * Icon set traced verbatim from the Paper design file. The Central Icons
- * package ships different glyphs for several of these slots, so the panel
- * draws them from here to stay pixel-faithful to the design.
- *
- * Paths are authored at the size the design draws them (16 or 18) and inherit
- * `currentColor`, so callers set colour with a text utility.
+ * Icon set traced from the Paper design file. Paths are authored at the size
+ * the design draws them (16 or 18) and inherit `currentColor`.
  */
 
 interface GlyphProps extends Omit<SVGProps<SVGSVGElement>, "children"> {

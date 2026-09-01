@@ -169,30 +169,9 @@ export default defineConfig(({ command, isPreview }) => ({
       "sonner",
       "clsx",
       "tailwind-merge",
-      "class-variance-authority",
       "@radix-ui/react-dialog",
-      "@radix-ui/react-tabs",
-      "@radix-ui/react-label",
-      "@radix-ui/react-slot",
+      "@radix-ui/react-tooltip",
       "lenis",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconShuffle",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconArrowRotateCounterClockwise",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconCodeBrackets",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconBurst",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconLayersTwo",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconBookmark",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconAtom",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconColorPalette",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconBezier",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconFormCircle",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconDotGrid3x3",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconClock",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconChevronRightSmall",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconInfoSimple",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconSun",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconMoon",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconCheckmark1Small",
-      "@central-icons-react/round-outlined-radius-2-stroke-1.5/IconClipboard",
     ],
   },
   plugins: [
@@ -214,9 +193,8 @@ export default defineConfig(({ command, isPreview }) => ({
             // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
             routeRules: {
-              // Baseline hardening. No X-Frame-Options / frame-ancestors here:
-              // the app is deliberately embedded by the Grok preview host, and
-              // AGENTS.md forbids blocking grok.com.
+              // No X-Frame-Options/frame-ancestors: the app is deliberately
+              // embedded by the Grok preview host.
               "/**": {
                 headers: {
                   "x-content-type-options": "nosniff",
@@ -225,17 +203,10 @@ export default defineConfig(({ command, isPreview }) => ({
                     "camera=(), microphone=(), geolocation=(), payment=()",
                 },
               },
-              /*
-               * Let the CDN absorb document traffic. Without this every hit —
-               * including bot scans of /wp-admin and friends — costs a
-               * serverless invocation, which is the app's only real abuse
-               * vector (there is no DB, no API, no upload path).
-               *
-               * Gated on auth being OFF. With sign-in enabled the document
-               * becomes per-user and a shared cache would serve one visitor's
-               * HTML to another. `max-age=0` keeps browsers revalidating;
-               * only the shared cache holds a copy.
-               */
+              /* Let the CDN absorb document traffic, so bot scans don't each
+                 cost a serverless invocation. Gated on auth being OFF: with
+                 sign-in on the document is per-user and a shared cache would
+                 leak one visitor's HTML to another. */
               ...(authEnabled
                 ? {}
                 : {
@@ -246,7 +217,7 @@ export default defineConfig(({ command, isPreview }) => ({
                       },
                     },
                   }),
-              // Auth endpoints must never be cached, belt-and-braces.
+              // Auth endpoints must never be cached.
               "/auth/**": { headers: { "cache-control": "no-store" } },
             },
           }),

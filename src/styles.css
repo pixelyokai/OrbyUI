@@ -11,11 +11,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/*
- * Design tokens mirrored from the "Unique yew" Paper file.
- * Roles below resolve to Tailwind-palette values (neutral / emerald) so the
- * light and dark themes stay in lockstep with the design file.
- */
+/* Design tokens mirrored from the "Unique yew" Paper file. */
 :root {
   /* Surfaces: page → shell → stage / panel */
   --page: #fafafa; /* neutral-50 */
@@ -246,11 +242,8 @@
   }
 }
 
-/*
- * Code-block scrollbar, from the "Scrollbar" frames in the Export artboards:
- * a 4px rounded thumb inset 6px from the edge. The 16px track minus a 6px
- * transparent border (clipped to the content box) is what produces the 4px.
- */
+/* 16px track minus a 6px transparent border, clipped to the content box,
+   is what renders as the design's 4px thumb. */
 .code-scroll::-webkit-scrollbar {
   width: 16px;
   height: 16px;
@@ -265,21 +258,15 @@
   background-color: var(--scroll-thumb);
   background-clip: content-box;
 }
-/*
- * The snippets run ~12,000px, so a proportional thumb collapses to a sliver.
- * Floor it at the lengths the Export artboards draw (80px / 58px).
- */
+/* Snippets run ~12,000px, so a proportional thumb collapses to a sliver. */
 .code-scroll::-webkit-scrollbar-thumb:vertical {
   min-height: 80px;
 }
 .code-scroll::-webkit-scrollbar-thumb:horizontal {
   min-width: 58px;
 }
-/*
- * Firefox only. Chrome supports `scrollbar-width` too and lets it override the
- * ::-webkit-scrollbar sizing above, which collapsed the 16px track back to a
- * thin overlay bar — so it must not be declared where the webkit rules apply.
- */
+/* Firefox only. Chrome honours scrollbar-width OVER the ::-webkit rules above,
+   collapsing the track — so it must not apply where those rules do. */
 @supports not selector(::-webkit-scrollbar) {
   .code-scroll {
     scrollbar-width: thin;
@@ -287,21 +274,12 @@
   }
 }
 
-/*
- * Toast close button. Sonner absolutely positions it at the top-left corner and
- * fades it in on hover; the Toasters artboards put it inline at the trailing
- * edge, vertically centred, always visible. Overriding here rather than via
- * `classNames` because sonner's own stylesheet wins on specificity.
- */
-/*
- * A modal Radix dialog sets `pointer-events: none` on <body>, which inherits
- * into the toaster and makes the toast — and its close button — unclickable
- * while the Export modal is open (the hit test lands on the dialog overlay).
- * Not a z-index problem: the toaster already sits at z-index 999999999.
- * Restoring `auto` on the toast itself is what Radix does for its own content.
- * The wrapper stays `none` so it never blocks the page, and sonner's
- * `[data-visible='false']` rule still wins on specificity for hidden toasts.
- */
+/* Sonner parks the close button top-left and fades it in on hover; the design
+   puts it trailing and always visible. Needs !important — sonner's own
+   selector outranks a plain descendant rule. */
+/* A modal Radix dialog sets pointer-events:none on <body>, which inherits here
+   and makes toasts unclickable. Not z-index. Wrapper stays none so it never
+   blocks the page. */
 [data-sonner-toaster] {
   pointer-events: none;
 }
@@ -327,16 +305,8 @@
   width: 16px;
 }
 
-/*
- * Export modal enter/exit. Radix keeps the node mounted on close until the CSS
- * animation finishes, so the exit is driven purely by `data-state="closed"` —
- * no JS timers to keep in sync.
- *
- * Only opacity and transform animate, both compositor properties, so the orb's
- * WebGL loop keeps its frames. The content settles from 0.97 with a 4px rise;
- * the exit is faster than the entry, which is the usual asymmetry — leaving
- * should feel decisive, arriving should feel placed.
- */
+/* Radix holds the node mounted until the exit animation ends, so data-state
+   drives both directions with no JS timers. */
 @keyframes dialog-overlay-in {
   from {
     opacity: 0;
@@ -347,13 +317,9 @@
     opacity: 0;
   }
 }
-/*
- * Animate `translate` and `scale` as standalone properties, never `transform`.
- * Tailwind v4's `-translate-x-1/2 -translate-y-1/2` centre the dialog via the
- * `translate` property, so a keyframe that also centred it through `transform`
- * applied the offset twice and the modal flew in from the top-left corner.
- * Both ends are declared so the resting state is never inferred.
- */
+/* Standalone `translate`/`scale`, never `transform`: Tailwind v4 centres the
+   dialog via the `translate` property, so centring again through `transform`
+   applies the offset twice and the modal flies in from the corner. */
 @keyframes dialog-content-in {
   from {
     opacity: 0;

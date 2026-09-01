@@ -1,14 +1,9 @@
 /**
- * Minimal syntax tokeniser for the export dialog.
+ * Minimal dependency-free syntax tokeniser for the export dialog.
  *
- * Deliberately dependency-free: the exported snippets are the product's whole
- * pitch ("no extra packages"), and pulling in Shiki or Prism to colour them
- * would outweigh every other dependency in the app.
- *
- * One combined regex scanned left-to-right, so the *earliest* construct always
- * wins. That ordering is what keeps the generated code correct: the exports
- * embed GLSL inside JS string literals, full of slash-slash and block-comment
- * sequences that a naive comment-first pass would mistake for real comments.
+ * One combined regex scanned left-to-right, so the earliest construct wins.
+ * That ordering matters: the exports embed GLSL inside JS strings, full of
+ * comment-like sequences a comment-first pass would mis-tokenise.
  */
 
 export type TokenKind =
@@ -47,11 +42,7 @@ const FN = String.raw`(?<fn>[A-Za-z_$][\w$]*)(?=\s*\()`;
 const TAG = String.raw`(?<tag><\/?[a-zA-Z][\w-]*)`;
 const ATTR = String.raw`(?<attr>[a-zA-Z-]+)(?=\s*=\s*["'])`;
 
-/*
- * HTML puts tag/attr first so markup wins inside `<script>`-bearing documents;
- * comment and string still precede them, so a tag mentioned inside a string
- * stays a string.
- */
+/* Comment and string stay first, so a tag inside a string stays a string. */
 function pattern(html: boolean) {
   const parts = html
     ? [COMMENT, STRING, TAG, ATTR, NUMBER, KEYWORD, FN]

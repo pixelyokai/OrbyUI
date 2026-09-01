@@ -1,10 +1,6 @@
 import { memo, useId } from "react";
 
-/**
- * The OrbyUI mark: four blurred colour blobs inside a circular clip, a soft
- * specular highlight, and a rim light that catches the lower-left edge.
- * Traced from the Paper design file.
- */
+/** The OrbyUI mark, traced from the Paper design file. */
 export const OrbMark = memo(function OrbMark({ size = 24 }: { size?: number }) {
   const uid = useId().replace(/:/g, "");
   const blur = `blur-${uid}`;

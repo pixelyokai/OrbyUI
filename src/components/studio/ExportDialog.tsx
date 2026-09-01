@@ -50,13 +50,8 @@ export function ExportDialog() {
   const [copied, setCopied] = useState(false);
   const preRef = useRef<HTMLPreElement>(null);
   const codeRef = useRef<HTMLElement>(null);
-  /*
-   * Element kept in state, not just a ref, so Lenis attaches reliably. Radix
-   * mounts the dialog through a portal, and this component's effect can run
-   * before that content commits — leaving both refs null, which is how the
-   * code pane silently went un-smoothed. A state-backed callback ref re-runs
-   * the effect at the moment the <pre> actually exists.
-   */
+  // State, not just a ref: Radix mounts the dialog in a portal, so this
+  // component's effect can run before the <pre> exists and Lenis never attaches.
   const [preEl, setPreEl] = useState<HTMLPreElement | null>(null);
   const attachPre = useCallback((el: HTMLPreElement | null) => {
     preRef.current = el;
@@ -115,14 +110,8 @@ export function ExportDialog() {
           e.preventDefault();
           preRef.current?.focus();
         }}
-        /*
-         * Don't dismiss on an outside click. Copying is a deliberate task and
-         * losing the snippet to a stray click is annoying — and because the
-         * toast renders outside the dialog, clicking its close button counted
-         * as an outside interaction and took the modal with it.
-         * Escape and the ✕ button remain, so there's still a keyboard and a
-         * pointer way out.
-         */
+        // The toast renders outside the dialog, so dismissing on outside click
+        // closed the modal too. Escape and the ✕ button still close it.
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -132,13 +121,8 @@ export function ExportDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        {/*
-         * min-h-0 the whole way down, or the 400px code panel refuses to shrink
-         * and overflows the dialog's max-height — which is what was clipping the
-         * snippet and stopping <pre> from ever scrolling.
-         * overflow-hidden clips the tab row's bottom border to the rounded
-         * corners; without it the divider ran square across them.
-         */}
+        {/* min-h-0 must run the whole way down or the code panel cannot shrink
+            and overflows the dialog instead of scrolling. */}
         <div className="flex min-h-0 flex-1 flex-col p-2.5">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg bg-code shadow-[inset_0_0_0_1px_var(--hair),inset_0_0_0_1.5px_rgb(255_255_255/0.24)] outline outline-hair-strong -outline-offset-1 dark:shadow-none">
             <div className="flex shrink-0 items-center justify-between border-b border-hair-strong px-3">

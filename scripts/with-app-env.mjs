@@ -106,18 +106,13 @@ export function isMainModule(moduleUrl) {
 }
 
 /**
- * Absolute path to a local dependency's JS bin entry, or `null` when `command`
- * is not a resolvable package (a system binary such as `node`).
+ * Absolute path to a local dependency's JS bin entry, or `null` for anything
+ * that isn't a resolvable package (a system binary such as `node`).
  *
- * Windows cannot exec the extensionless `node_modules/.bin/<cmd>` shim npm
- * writes, and Node refuses to spawn the sibling `.cmd` without a shell — so
- * `spawn("vite", …)` died with `ENOENT` and `npm run dev` never started there.
- *
- * Running the package's own entry under this Node fixes it *without* a shell,
- * which matters: `shell: true` would make cmd.exe the direct child, so the
- * signals forwarded below would stop the shell and orphan the dev server, and
- * `exitStatusFromChild` would report the shell's status rather than Vite's.
- * On Linux this is simply one less layer of indirection.
+ * Windows cannot exec the extensionless `node_modules/.bin` shim, so
+ * `spawn("vite", …)` fails with ENOENT. Deliberately not `shell: true`: a shell
+ * would become the direct child, swallowing the signals forwarded below and
+ * masking the child's exit status.
  */
 export function resolveLocalBin(command, root = projectRoot()) {
   try {

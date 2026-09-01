@@ -19,13 +19,8 @@ export function applyTheme(dark: boolean) {
   }
 }
 
-/*
- * The applied theme lives on <html class="dark">, set by the blocking script in
- * __root.tsx before paint. Reading it straight from the DOM (rather than React
- * context) keeps every consumer in agreement even when the bundler duplicates
- * this module across chunks, and matches what the user actually sees.
- */
-
+/* Read from the DOM, not React context: the bundler can duplicate this module
+   across chunks, which would give consumers two different contexts. */
 function subscribe(onChange: () => void) {
   const observer = new MutationObserver(onChange);
   observer.observe(document.documentElement, {

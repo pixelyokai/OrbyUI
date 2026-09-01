@@ -4,12 +4,9 @@ import type Lenis from "lenis";
 /**
  * Attach Lenis smooth scrolling to a scroll container.
  *
- * `enabled` exists because refs are stable objects: with only the refs in the
- * dependency array the effect runs exactly once, on mount. That is fine for a
- * container that is present from the start (the control panel), but silently
- * does nothing for one mounted later — the export dialog's code pane, whose
- * <pre> does not exist until the dialog opens. The effect saw two null refs,
- * returned early, and never re-ran. Pass the open state so it retries.
+ * Refs are stable objects, so without `enabled` the effect runs once on mount
+ * and silently no-ops for a container mounted later (the export dialog's code
+ * pane). Pass a value that changes when the element appears.
  */
 export function usePanelLenis(
   wrapperRef: RefObject<HTMLElement | null>,

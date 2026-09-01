@@ -47,14 +47,9 @@ export const ColorField = memo(function ColorField({
           </Tooltip>
         ) : null}
       </span>
-      {/*
-       * The whole row opens the picker, not just the swatch. The colour input
-       * is kept rendered (0×0, not `hidden`) because browsers ignore a
-       * programmatic .click() on a display:none input. Both the input and the
-       * hex field stop propagation: the input so the synthetic click doesn't
-       * bubble back into this handler and recurse, the hex field so you can
-       * still put a caret in it and type a value.
-       */}
+      {/* The colour input stays rendered at 0×0 — browsers ignore .click() on a
+          display:none input. Both children stop propagation: the input to avoid
+          recursing into this handler, the hex field to stay typeable. */}
       <div
         onClick={() => colorRef.current?.click()}
         className="flex cursor-pointer items-center gap-2 rounded-lg border border-hair-strong bg-panel px-2 py-1.5 transition-colors duration-150 ease-soft hover:border-thumb-ring"
