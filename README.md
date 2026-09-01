@@ -37,11 +37,15 @@ The studio copies to your clipboard rather than downloading, so the filenames
 above are suggestions — save the snippet wherever suits your project.
 
 Every export is generated in the browser from your current configuration, with
-the shader inlined. There is no build step and nothing to `npm install`.
+the shader inlined. **Nothing is added to your `package.json`** — the
+JavaScript and HTML exports have no dependencies at all, and the React export
+needs only the `react` you already have.
 
 ---
 
-## Running it
+## Running the studio locally
+
+Only needed to work on OrbyUI itself — using an export requires none of this.
 
 ```bash
 npm install
