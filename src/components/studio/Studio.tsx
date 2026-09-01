@@ -7,7 +7,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { MATERIALS, MOOD_META, STYLE_META } from "@/lib/orb/presets";
 import { useOrbStore } from "@/lib/orb/store";
 import { ThemeProvider } from "@/lib/theme";
-import { cn } from "@/lib/utils";
 
 const ExportDialog = lazy(() => import("@/components/studio/ExportDialog"));
 
