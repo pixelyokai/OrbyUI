@@ -16,6 +16,7 @@ import {
   GlyphState,
   GlyphStyle,
   GlyphSun,
+  GlyphX,
 } from "@/components/studio/glyphs";
 import { usePanelLenis } from "@/components/studio/use-panel-lenis";
 import { Slider } from "@/components/ui/slider";
@@ -101,7 +102,7 @@ export const ControlPanel = memo(function ControlPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Toolbar: theme, reset, randomize — then GitHub and Export */}
+      {/* Toolbar: theme, reset, randomize — then X, GitHub and Export */}
       <div className="relative z-10 flex shrink-0 flex-col gap-3 border-b border-header-border p-3">
         <div className="flex min-h-[30px] items-center">
           <div className="flex flex-1 items-center gap-3">
@@ -118,18 +119,31 @@ export const ControlPanel = memo(function ControlPanel({
               <GlyphShuffle size={16} />
             </IconBtn>
           </div>
-          <div className="flex items-center gap-3">
-            <Tooltip content="View source on GitHub">
-              <a
-                href="https://github.com/pixelyokai/OrbyUI"
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label="View source on GitHub"
-                className="flex size-7 items-center justify-center rounded-lg text-foreground transition-opacity duration-150 ease-soft hover:opacity-70"
-              >
-                <GlyphGithub size={16} />
-              </a>
-            </Tooltip>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Tooltip content="Follow on X">
+                <a
+                  href="https://x.com/pixelyokai"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Follow on X"
+                  className="flex size-7 items-center justify-center rounded-lg text-foreground transition-opacity duration-150 ease-soft hover:opacity-70"
+                >
+                  <GlyphX size={16} />
+                </a>
+              </Tooltip>
+              <Tooltip content="View source on GitHub">
+                <a
+                  href="https://github.com/pixelyokai/OrbyUI"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="View source on GitHub"
+                  className="flex size-7 items-center justify-center rounded-lg text-foreground transition-opacity duration-150 ease-soft hover:opacity-70"
+                >
+                  <GlyphGithub size={16} />
+                </a>
+              </Tooltip>
+            </div>
             {exportSlot}
           </div>
         </div>
