@@ -147,6 +147,8 @@ src/
 **The orb runs entirely client-side.** No API, no database, no user input
 reaches a server. The shader executes on the visitor's GPU.
 
+
+
 ### Design system
 
 The interface is ported from a [Paper](https://paper.design) file. Colours,
@@ -159,7 +161,9 @@ in lockstep.
 > `transform`. Any hand-written keyframe or transition touching them must use
 > those same properties — mixing in `transform` applies the offset twice.
 
+
 ---
+
 
 ## Notes on dependencies
 
@@ -169,7 +173,9 @@ in lockstep.
   builds strip it entirely — but automated license scanners will flag it, so
   it's called out here rather than discovered.
 
+
 ---
+
 
 ## License
 
