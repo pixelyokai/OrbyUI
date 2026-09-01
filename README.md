@@ -5,11 +5,11 @@
 Design animated WebGL orbs in the browser, then export them as drop-in snippets
 with **no runtime dependencies**.
 
-**[Try it → orby-ui.vercel.app](https://orby-ui.vercel.app/)**
-
 Pick a style, material and mood, tune the shader by hand, and copy a
 self-contained component straight into your project. Nothing to install, no
 package to track. The export is a single file.
+
+**[Try it → orby-ui.vercel.app](https://orby-ui.vercel.app/)**
 
 ---
 
@@ -34,10 +34,10 @@ package to track. The export is a single file.
 | TypeScript | `orby-ui.d.ts` | Typings to sit beside the JS or React file |
 
 The studio copies to your clipboard rather than downloading, so the filenames
-above are suggestions — save the snippet wherever suits your project.
+above are suggestions, save the snippet wherever suits your project.
 
 Every export is generated in the browser from your current configuration, with
-the shader inlined. **Nothing is added to your `package.json`** — the
+the shader inlined. **Nothing is added to your `package.json`** - the
 JavaScript and HTML exports have no dependencies at all, and the React export
 needs only the `react` you already have.
 
@@ -45,7 +45,7 @@ needs only the `react` you already have.
 
 ## Running the studio locally
 
-Only needed to work on OrbyUI itself — using an export requires none of this.
+Only needed to work on OrbyUI itself - using an export requires none of this.
 
 ```bash
 npm install
@@ -84,7 +84,7 @@ import { OrbyUI } from "./components/OrbyUI";
    `MOOD_MUL` / `easePulse` or the pulse block unless you also replace them with
    `pulse = 1` and the raw `config.intensity` / `noiseSpeed` / `distortion`.
 
-### JavaScript — `orby-ui.js`
+### JavaScript - `orby-ui.js`
 
 1. **Export → JavaScript → copy.**
 2. Save as `orby-ui.js`.
@@ -100,7 +100,7 @@ import { OrbyUI } from "./components/OrbyUI";
 5. **States:** omit `mood`, `moodSpeed`, `easing` and `spring` from options, and
    don't call `setMood`. Same pulse-block rule as React.
 
-### HTML — `orby-ui.html`
+### HTML - `orby-ui.html`
 
 1. **Export → HTML → copy.**
 2. Save as `orby-ui.html`. Open it locally or host it as a static file.
@@ -110,9 +110,9 @@ import { OrbyUI } from "./components/OrbyUI";
    `moodSpeed`, `easing` and `spring` from the inline config; `orb.setMood(...)`
    is optional.
 
-### TypeScript — `orby-ui.d.ts`
+### TypeScript - `orby-ui.d.ts`
 
-Declarations only — no runtime.
+Declarations only - no runtime.
 
 1. **Export → TypeScript → copy.**
 2. Save it next to `orby-ui.js`.
@@ -144,15 +144,8 @@ src/
   lib/theme.ts          theme, read from the DOM rather than context
 ```
 
-Two deliberate choices worth knowing about:
-
 **The orb runs entirely client-side.** No API, no database, no user input
 reaches a server. The shader executes on the visitor's GPU.
-
-**No syntax-highlighting library.** The export dialog colours code with a small
-in-repo tokeniser (`src/lib/highlight.ts`). Pulling in Shiki or Prism to
-decorate a snippet whose whole pitch is "no extra packages" felt like the wrong
-trade.
 
 ### Design system
 
@@ -175,8 +168,6 @@ in lockstep.
   source-available rather than OSI open source. It never ships — production
   builds strip it entirely — but automated license scanners will flag it, so
   it's called out here rather than discovered.
-- The icon glyphs in `src/components/studio/glyphs.tsx` were traced from the
-  project's own Paper design file. Their original provenance is unverified.
 
 ---
 
@@ -184,5 +175,5 @@ in lockstep.
 
 [MIT](LICENSE) © pixelyokai
 
-The license covers the code in this repository. Dependencies carry their own
-terms — see the note above.
+The license covers the code in this repository. Dependencies, if any carry their own
+terms - see the note above.
