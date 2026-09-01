@@ -361,12 +361,12 @@ export class OrbRenderer {
   }
 
   private syncColors() {
-    const key = `${this.config.colorA}|${this.config.colorB}|${this.config.colorC}|${this.config.background}`;
+    const key = `${this.config.light}|${this.config.body}|${this.config.core}|${this.config.background}`;
     if (key === this.colorKey) return;
     this.colorKey = key;
-    fillRgb(this.rgbA, this.config.colorA);
-    fillRgb(this.rgbB, this.config.colorB);
-    fillRgb(this.rgbC, this.config.colorC);
+    fillRgb(this.rgbA, this.config.light);
+    fillRgb(this.rgbB, this.config.body);
+    fillRgb(this.rgbC, this.config.core);
     fillRgb(this.rgbBg, this.config.background);
   }
 

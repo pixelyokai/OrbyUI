@@ -143,8 +143,8 @@ function FallbackOrb() {
       <div
         className="absolute left-1/2 top-1/2 size-[38%] -translate-x-1/2 -translate-y-1/2 rounded-full"
         style={{
-          background: `radial-gradient(circle at 35% 32%, ${config.colorA}, ${config.colorB} 42%, ${config.colorC} 78%)`,
-          boxShadow: `0 0 48px ${config.colorA}55`,
+          background: `radial-gradient(circle at 35% 32%, ${config.light}, ${config.body} 42%, ${config.core} 78%)`,
+          boxShadow: `0 0 48px ${config.light}55`,
         }}
       />
     </div>

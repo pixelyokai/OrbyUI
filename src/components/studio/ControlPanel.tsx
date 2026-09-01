@@ -36,9 +36,9 @@ const NOISE_CHIPS = NOISE_META.map((n) => ({ id: n.id, label: n.label }));
 
 /** Copy shown on the palette info tooltips, from the design file. */
 const PALETTE_HINTS = {
-  colorA: "Bright inner glow, rim highlights, glass tint, iridescence, fluid dye. The “alive” color.",
-  colorB: "Body of the orb, second light, cooler or contrasting wash next to Light.",
-  colorC: "Dark interior, the volume behind the glow. Keeps it from looking flat.",
+  light: "Bright inner glow, rim highlights, glass tint, iridescence, fluid dye. The “alive” color.",
+  body: "Body of the orb, second light, cooler or contrasting wash next to Light.",
+  core: "Dark interior, the volume behind the glow. Keeps it from looking flat.",
 } as const;
 
 const TABS = [
@@ -229,9 +229,9 @@ export const ControlPanel = memo(function ControlPanel({
             action={<ShuffleBtn label="Randomize palette" onClick={randomizePalette} />}
           >
             <div className="flex gap-2 pt-3">
-              <BoundColor label="Light" field="colorA" />
-              <BoundColor label="Body" field="colorB" />
-              <BoundColor label="Core" field="colorC" />
+              <BoundColor label="Light" field="light" />
+              <BoundColor label="Body" field="body" />
+              <BoundColor label="Core" field="core" />
             </div>
             <SliderGroup>
               <FieldSlider
@@ -401,10 +401,10 @@ function MaterialChips() {
 
 function PresetChips() {
   const style = useOrbStore((s) => s.config.style);
-  const colorA = useOrbStore((s) => s.config.colorA);
+  const light = useOrbStore((s) => s.config.light);
   const applyPresetId = useOrbStore((s) => s.applyPresetId);
   const presetOn =
-    PRESETS.find((p) => p.config.style === style && p.config.colorA === colorA)?.id ?? "";
+    PRESETS.find((p) => p.config.style === style && p.config.light === light)?.id ?? "";
   return <ChipRow items={PRESET_CHIPS} active={presetOn} onPick={applyPresetId} />;
 }
 
@@ -439,7 +439,7 @@ function BoundColor({
   field,
   label,
 }: {
-  field: "colorA" | "colorB" | "colorC";
+  field: "light" | "body" | "core";
   label: string;
 }) {
   const value = useOrbStore((s) => s.config[field]);

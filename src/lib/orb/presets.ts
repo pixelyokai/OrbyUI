@@ -17,9 +17,9 @@ export const PRESETS: OrbPreset[] = [
     name: "Lumen",
     config: {
       style: "volume",
-      colorA: "#7ee0ff",
-      colorB: "#4f8cff",
-      colorC: "#0b1b3a",
+      light: "#7ee0ff",
+      body: "#4f8cff",
+      core: "#0b1b3a",
       hue: 0,
       intensity: 1,
       glow: 0.42,
@@ -34,9 +34,9 @@ export const PRESETS: OrbPreset[] = [
     name: "Nova",
     config: {
       style: "halo",
-      colorA: "#c4a6ff",
-      colorB: "#5ce1ff",
-      colorC: "#1a1258",
+      light: "#c4a6ff",
+      body: "#5ce1ff",
+      core: "#1a1258",
       hue: 0,
       intensity: 1.04,
       glow: 0.55,
@@ -52,9 +52,9 @@ export const PRESETS: OrbPreset[] = [
     name: "Aurora",
     config: {
       style: "plasma",
-      colorA: "#7dffc3",
-      colorB: "#67e8f9",
-      colorC: "#022c22",
+      light: "#7dffc3",
+      body: "#67e8f9",
+      core: "#022c22",
       hue: 12,
       intensity: 1.02,
       glow: 0.4,
@@ -69,9 +69,9 @@ export const PRESETS: OrbPreset[] = [
     name: "Ember",
     config: {
       style: "volume",
-      colorA: "#ffb56b",
-      colorB: "#ff6b4a",
-      colorC: "#2a0c08",
+      light: "#ffb56b",
+      body: "#ff6b4a",
+      core: "#2a0c08",
       hue: 0,
       intensity: 1.08,
       glow: 0.48,
@@ -86,9 +86,9 @@ export const PRESETS: OrbPreset[] = [
     name: "Tide",
     config: {
       style: "halo",
-      colorA: "#5eead4",
-      colorB: "#38bdf8",
-      colorC: "#042f2e",
+      light: "#5eead4",
+      body: "#38bdf8",
+      core: "#042f2e",
       hue: -8,
       intensity: 0.98,
       glow: 0.44,
@@ -102,9 +102,9 @@ export const PRESETS: OrbPreset[] = [
     name: "Prism",
     config: {
       style: "iris",
-      colorA: "#fde68a",
-      colorB: "#c4b5fd",
-      colorC: "#1e1b4b",
+      light: "#fde68a",
+      body: "#c4b5fd",
+      core: "#1e1b4b",
       hue: 0,
       intensity: 1.06,
       glow: 0.38,
@@ -120,9 +120,9 @@ export const PRESETS: OrbPreset[] = [
     name: "Void",
     config: {
       style: "volume",
-      colorA: "#e5e7eb",
-      colorB: "#93c5fd",
-      colorC: "#030712",
+      light: "#e5e7eb",
+      body: "#93c5fd",
+      core: "#030712",
       hue: 0,
       intensity: 0.9,
       glow: 0.34,
@@ -137,9 +137,9 @@ export const PRESETS: OrbPreset[] = [
     name: "Pulse",
     config: {
       style: "iris",
-      colorA: "#fb7185",
-      colorB: "#38bdf8",
-      colorC: "#111827",
+      light: "#fb7185",
+      body: "#38bdf8",
+      core: "#111827",
       hue: 0,
       intensity: 1.08,
       glow: 0.46,
@@ -260,11 +260,11 @@ export function applyMaterial(base: OrbConfig, id: OrbMaterial): OrbConfig {
   return { ...base, ...mat.config, material: id };
 }
 
-export function randomizeColors(): Pick<OrbConfig, "colorA" | "colorB" | "colorC"> {
+export function randomizeColors(): Pick<OrbConfig, "light" | "body" | "core"> {
   const palettes = PRESETS.map((p) => ({
-    colorA: p.config.colorA ?? DEFAULT_CONFIG.colorA,
-    colorB: p.config.colorB ?? DEFAULT_CONFIG.colorB,
-    colorC: p.config.colorC ?? DEFAULT_CONFIG.colorC,
+    light: p.config.light ?? DEFAULT_CONFIG.light,
+    body: p.config.body ?? DEFAULT_CONFIG.body,
+    core: p.config.core ?? DEFAULT_CONFIG.core,
   }));
   return palettes[Math.floor(Math.random() * palettes.length)]!;
 }

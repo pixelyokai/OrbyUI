@@ -17,11 +17,11 @@ describe("hexToRgb", () => {
 describe("sanitizeConfig", () => {
   it("drops unknown keys and invalid enums", () => {
     const cfg = sanitizeConfig(
-      JSON.parse('{"style":"not-a-style","material":"dither","colorA":"red","mood":"speaking","extra":"x"}'),
+      JSON.parse('{"style":"not-a-style","material":"dither","light":"red","mood":"speaking","extra":"x"}'),
     );
     assert.equal(cfg.style, "volume");
     assert.equal(cfg.material, "dither");
-    assert.equal(cfg.colorA, "#7ee0ff");
+    assert.equal(cfg.light, "#7ee0ff");
     assert.equal(cfg.mood, "speaking");
     assert.equal("extra" in cfg, false);
   });

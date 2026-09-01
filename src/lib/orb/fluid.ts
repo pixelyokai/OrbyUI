@@ -103,8 +103,8 @@ export interface IFluid {
     dt: number,
     mouse: { x: number; y: number },
     hover: number,
-    colorA: [number, number, number],
-    colorB: [number, number, number],
+    light: [number, number, number],
+    body: [number, number, number],
     speed: number,
   ): void;
   bindDye(gl: WebGLRenderingContext, unit: number): boolean;
@@ -303,8 +303,8 @@ export class FluidSim implements IFluid {
     dt: number,
     mouse: { x: number; y: number },
     hover: number,
-    colorA: [number, number, number],
-    colorB: [number, number, number],
+    light: [number, number, number],
+    body: [number, number, number],
     speed: number,
   ) {
     if (!this.ok || !this.velA || !this.velB || !this.dyeA || !this.dyeB) return;
@@ -341,16 +341,16 @@ export class FluidSim implements IFluid {
     const py = 0.5 + Math.sin(swirl * 0.9) * 0.2;
     const tx = -Math.sin(swirl) * 0.09 * (0.55 + speed * 0.4);
     const ty = Math.cos(swirl) * 0.09 * (0.55 + speed * 0.4);
-    splatForce(px, py, tx, ty, colorA, 0.02);
+    splatForce(px, py, tx, ty, light, 0.02);
 
     const px2 = 0.5 + Math.cos(swirl + 2.2) * 0.16;
     const py2 = 0.5 + Math.sin(swirl * 1.05 + 1.3) * 0.16;
-    splatForce(px2, py2, -tx * 0.55, -ty * 0.55, colorB, 0.016);
+    splatForce(px2, py2, -tx * 0.55, -ty * 0.55, body, 0.016);
 
     if (hover > 0.05) {
       const mx = mouse.x * 0.5 + 0.5;
       const my = mouse.y * 0.5 + 0.5;
-      splatForce(mx, my, mouse.x * 0.07 * hover, mouse.y * 0.07 * hover, colorA, 0.022);
+      splatForce(mx, my, mouse.x * 0.07 * hover, mouse.y * 0.07 * hover, light, 0.022);
     }
 
     if (this.advect && this.velA && this.velB) {

@@ -5,6 +5,8 @@
 Design animated WebGL orbs in the browser, then export them as drop-in snippets
 with **no runtime dependencies**.
 
+**[Try it → orby-ui.vercel.app](https://orby-ui.vercel.app/)**
+
 Pick a style, material and mood, tune the shader by hand, and copy a
 self-contained component straight into your project. Nothing to install, no
 package to track. The export is a single file.
@@ -24,12 +26,15 @@ package to track. The export is a single file.
 
 ### Export formats
 
-| Format | File | Notes |
+| Format | Save as | Notes |
 | --- | --- | --- |
-| React | `AiOrb.tsx` | One component, `react` as the only peer |
-| JavaScript | `ai-orb.js` | Mount on any element, zero dependencies |
-| HTML | `orb.html` | Open locally or drop on any static host |
-| TypeScript | `ai-orb.d.ts` | Typings to sit beside the JS or React file |
+| React | `OrbyUI.tsx` | One component, `react` as the only peer |
+| JavaScript | `orby-ui.js` | Mount on any element, zero dependencies |
+| HTML | `orby-ui.html` | Open locally or drop on any static host |
+| TypeScript | `orby-ui.d.ts` | Typings to sit beside the JS or React file |
+
+The studio copies to your clipboard rather than downloading, so the filenames
+above are suggestions — save the snippet wherever suits your project.
 
 Every export is generated in the browser from your current configuration, with
 the shader inlined. There is no build step and nothing to `npm install`.
@@ -53,9 +58,72 @@ environment so the dev server and the build can never disagree about a flag.
 
 ---
 
+## Using an export
+
+### React — `OrbyUI.tsx`
+
+1. **Export → React → copy.**
+2. Save as `src/components/OrbyUI.tsx`.
+3. The parent must have a size:
+
+```tsx
+import { OrbyUI } from "./components/OrbyUI";
+
+<div style={{ width: 420, height: 420 }}>
+  <OrbyUI />
+</div>
+```
+
+4. **Optional props:** `mood`, `light`, `body`, `core`, plus any other config key.
+5. **Next.js:** add `"use client"` at the top of `OrbyUI.tsx`.
+6. **States:** `<OrbyUI />` on its own is enough — don't pass `mood`. Don't strip
+   `MOOD_MUL` / `easePulse` or the pulse block unless you also replace them with
+   `pulse = 1` and the raw `config.intensity` / `noiseSpeed` / `distortion`.
+
+### JavaScript — `orby-ui.js`
+
+1. **Export → JavaScript → copy.**
+2. Save as `orby-ui.js`.
+3. Mount it:
+
+```html
+<div id="orby-ui" style="width:420px;height:420px"></div>
+<script type="module" src="./orby-ui.js"></script>
+```
+
+4. **API:** `createOrbyUI(el, options)`, then `setMood`, `setConfig`, `capture()`,
+   `destroy()`.
+5. **States:** omit `mood`, `moodSpeed`, `easing` and `spring` from options, and
+   don't call `setMood`. Same pulse-block rule as React.
+
+### HTML — `orby-ui.html`
+
+1. **Export → HTML → copy.**
+2. Save as `orby-ui.html`. Open it locally or host it as a static file.
+3. **Embed:** `<iframe src="/orby-ui.html" style="width:420px;height:420px;border:0">`,
+   or paste the `#orby-ui` div and module script into a page you already have.
+4. **States:** already running without wiring moods. You can delete `mood`,
+   `moodSpeed`, `easing` and `spring` from the inline config; `orb.setMood(...)`
+   is optional.
+
+### TypeScript — `orby-ui.d.ts`
+
+Declarations only — no runtime.
+
+1. **Export → TypeScript → copy.**
+2. Save it next to `orby-ui.js`.
+3. Set `"allowJs": true` in `tsconfig.json`.
+4. `import { createOrbyUI, type OrbyUIConfig } from "./orby-ui.js";`
+5. Skip this file entirely if you only use the React export.
+6. **States:** those fields are already optional on `OrbyUIConfig` — just omit
+   them. Don't delete `OrbMood` / `setMood` from the `.d.ts` unless you also
+   removed them from the JS.
+
+---
+
 ## How it's built
 
-| | |
+| Layer | Choice |
 | --- | --- |
 | Framework | TanStack Start · React 19 |
 | Styling | Tailwind v4, design tokens in `src/styles.css` |

@@ -20,7 +20,7 @@ import {
 
 const STORAGE_KEY = "orbyui-orb-v14";
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
-const COLOR_KEYS = ["colorA", "colorB", "colorC", "background"] as const;
+const COLOR_KEYS = ["light", "body", "core", "background"] as const;
 
 function loadStored(): OrbConfig | null {
   if (typeof window === "undefined") return null;

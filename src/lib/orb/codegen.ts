@@ -6,9 +6,9 @@ function lit(config: OrbConfig) {
   return `{
   style: ${JSON.stringify(config.style)},
   material: ${JSON.stringify(config.material)},
-  colorA: ${JSON.stringify(config.colorA)},
-  colorB: ${JSON.stringify(config.colorB)},
-  colorC: ${JSON.stringify(config.colorC)},
+  light: ${JSON.stringify(config.light)},
+  body: ${JSON.stringify(config.body)},
+  core: ${JSON.stringify(config.core)},
   background: ${JSON.stringify(config.background)},
   hue: ${config.hue},
   intensity: ${config.intensity},
@@ -103,7 +103,7 @@ function applyPartial(cfg, partial) {
   if (next.noiseAlgo && NOISE_OK[next.noiseAlgo]) cfg.noiseAlgo = next.noiseAlgo;
   if (next.easing && EASE_OK[next.easing]) cfg.easing = next.easing;
   if (next.spring && SPRING_OK[next.spring]) cfg.spring = next.spring;
-  ["colorA","colorB","colorC","background"].forEach(function (k) {
+  ["light","body","core","background"].forEach(function (k) {
     if (typeof next[k] === "string" && HEX_OK.test(next[k])) cfg[k] = next[k];
   });
   if (typeof next.interactivity === "boolean") cfg.interactivity = next.interactivity;
@@ -175,7 +175,7 @@ function makeTarget(gl, w, h) {
   return { fbo, tex, w, h };
 }
 
-export function createAiOrb(el, options) {
+export function createOrbyUI(el, options) {
   if (!el) throw new Error("mount element required");
   const canvas = document.createElement("canvas");
   canvas.style.width = "100%";
@@ -184,7 +184,7 @@ export function createAiOrb(el, options) {
   el.appendChild(canvas);
 
   const config = Object.assign({
-    style: "volume", material: "energy", colorA: "#7ee0ff", colorB: "#4f8cff", colorC: "#0b1b3a",
+    style: "volume", material: "energy", light: "#7ee0ff", body: "#4f8cff", core: "#0b1b3a",
     background: "#08080a", hue: 0, intensity: 1,
     glow: 0.55, bloom: 0.4, scale: 0.5, innerRadius: 0.42, noiseScale: 1.05,
     noiseSpeed: 0.32, rotationSpeed: 0.18, distortion: 0.42, iridescence: 0.85,
@@ -203,7 +203,7 @@ export function createAiOrb(el, options) {
     fb.style.height = "42%";
     fb.style.margin = "auto";
     fb.style.borderRadius = "50%";
-    fb.style.background = "radial-gradient(circle at 35% 32%, " + (HEX_OK.test(config.colorA) ? config.colorA : "#7ee0ff") + ", " + (HEX_OK.test(config.colorB) ? config.colorB : "#4f8cff") + " 50%, " + (HEX_OK.test(config.colorC) ? config.colorC : "#0b1b3a") + " 78%)";
+    fb.style.background = "radial-gradient(circle at 35% 32%, " + (HEX_OK.test(config.light) ? config.light : "#7ee0ff") + ", " + (HEX_OK.test(config.body) ? config.body : "#4f8cff") + " 50%, " + (HEX_OK.test(config.core) ? config.core : "#0b1b3a") + " 78%)";
     el.appendChild(fb);
     return {
       setMood: function () {},
@@ -341,8 +341,8 @@ export function createAiOrb(el, options) {
       }
       const px = 0.5 + Math.cos(swirl) * 0.2;
       const py = 0.5 + Math.sin(swirl * 0.9) * 0.2;
-      splat(px, py, -Math.sin(swirl) * 0.08, Math.cos(swirl) * 0.08, hexToRgb(config.colorA), 0.02, 0);
-      splat(px, py, 0, 0, hexToRgb(config.colorA), 0.02, 1);
+      splat(px, py, -Math.sin(swirl) * 0.08, Math.cos(swirl) * 0.08, hexToRgb(config.light), 0.02, 0);
+      splat(px, py, 0, 0, hexToRgb(config.light), 0.02, 1);
       gl2.useProgram(adv);
       bindAttrib();
       gl2.activeTexture(gl2.TEXTURE0);
@@ -428,9 +428,9 @@ export function createAiOrb(el, options) {
     bindAttrib();
     gl.uniform2f(loc.uResolution, canvas.width, canvas.height);
     gl.uniform1f(loc.uTime, time);
-    gl.uniform3fv(loc.uColorA, hexToRgb(config.colorA));
-    gl.uniform3fv(loc.uColorB, hexToRgb(config.colorB));
-    gl.uniform3fv(loc.uColorC, hexToRgb(config.colorC));
+    gl.uniform3fv(loc.uColorA, hexToRgb(config.light));
+    gl.uniform3fv(loc.uColorB, hexToRgb(config.body));
+    gl.uniform3fv(loc.uColorC, hexToRgb(config.core));
     gl.uniform1f(loc.uHue, config.hue || 0);
     gl.uniform1f(loc.uIntensity, config.intensity * m.intensity);
     gl.uniform1f(loc.uGlow, config.glow);
@@ -581,11 +581,11 @@ export function generateVanilla(config: OrbConfig) {
   return `/** OrbyUI orb — drop into any site. Zero dependencies. */
 ${RUNTIME}
 
-const mount = document.querySelector("#ai-orb");
-const orb = mount ? createAiOrb(mount, ${lit(config)}) : null;
+const mount = document.querySelector("#orby-ui");
+const orb = mount ? createOrbyUI(mount, ${lit(config)}) : null;
 
 // orb.setMood("listening" | "thinking" | "speaking" | "idle");
-// orb.setConfig({ colorA: "#7ee0ff" });
+// orb.setConfig({ light: "#7ee0ff" });
 `;
 }
 
@@ -595,21 +595,21 @@ import { useEffect, useRef, type CSSProperties } from "react";
 
 ${RUNTIME}
 
-export type AiOrbProps = {
+export type OrbyUIProps = {
   className?: string;
   style?: CSSProperties;
   mood?: "idle" | "listening" | "thinking" | "speaking";
-  colorA?: string;
-  colorB?: string;
-  colorC?: string;
+  light?: string;
+  body?: string;
+  core?: string;
   [key: string]: unknown;
 };
 
-export function AiOrb({
+export function OrbyUI({
   className,
   style,
   ...opts
-}: AiOrbProps) {
+}: OrbyUIProps) {
   const ref = useRef<HTMLDivElement>(null);
   const orbRef = useRef<{
     setMood: (mood: string) => void;
@@ -622,7 +622,7 @@ export function AiOrb({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const orb = createAiOrb(el, { ...${lit(config)}, ...optsRef.current });
+    const orb = createOrbyUI(el, { ...${lit(config)}, ...optsRef.current });
     orbRef.current = orb;
     return () => orb.destroy();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -644,7 +644,7 @@ export function AiOrb({
 
 /* Usage:
   <div style={{ width: 420, height: 420 }}>
-    <AiOrb mood="idle" colorA="${config.colorA}" colorB="${config.colorB}" colorC="${config.colorC}" />
+    <OrbyUI mood="idle" light="${config.light}" body="${config.body}" core="${config.core}" />
   </div>
 */
 `;
@@ -660,11 +660,11 @@ export function generateHtml(config: OrbConfig) {
   <title>OrbyUI</title>
   <style>
     html, body { height: 100%; margin: 0; background: ${bg}; }
-    #ai-orb { width: min(100vw, 100vh); height: min(100vw, 100vh); margin: 0 auto; }
+    #orby-ui { width: min(100vw, 100vh); height: min(100vw, 100vh); margin: 0 auto; }
   </style>
 </head>
 <body>
-  <div id="ai-orb"></div>
+  <div id="orby-ui"></div>
   <script type="module">
 ${generateVanilla(config)
   .split("\n")
@@ -687,12 +687,12 @@ export type NoiseAlgo = "simplex" | "value" | "perlin" | "worley" | "ridged" | "
 export type EasingId = "sine" | "linear" | "cubic" | "quart" | "expo" | "back" | "circ";
 export type SpringId = "none" | "smooth" | "snappy" | "bouncy" | "gentle" | "wobbly";
 
-export interface AiOrbConfig {
+export interface OrbyUIConfig {
   style?: OrbStyle;
   material?: OrbMaterial;
-  colorA?: string;
-  colorB?: string;
-  colorC?: string;
+  light?: string;
+  body?: string;
+  core?: string;
   background?: string;
   hue?: number;
   intensity?: number;
@@ -723,17 +723,17 @@ export interface AiOrbConfig {
   mood?: OrbMood;
 }
 
-export interface AiOrbHandle {
+export interface OrbyUIHandle {
   setMood(mood: OrbMood): void;
-  setConfig(partial: AiOrbConfig): void;
+  setConfig(partial: OrbyUIConfig): void;
   capture(): string | null;
   destroy(): void;
 }
 
-export function createAiOrb(el: HTMLElement, options?: AiOrbConfig): AiOrbHandle;
+export function createOrbyUI(el: HTMLElement, options?: OrbyUIConfig): OrbyUIHandle;
 
-export function AiOrb(
-  props: AiOrbConfig & { className?: string; style?: React.CSSProperties },
+export function OrbyUI(
+  props: OrbyUIConfig & { className?: string; style?: React.CSSProperties },
 ): JSX.Element;
 `;
 }
@@ -750,10 +750,10 @@ export const EXPORT_META: Record<
   ExportKind,
   { label: string; filename: string; mime: string }
 > = {
-  react: { label: "React", filename: "AiOrb.tsx", mime: "text/plain" },
-  js: { label: "JavaScript", filename: "ai-orb.js", mime: "text/javascript" },
-  html: { label: "HTML", filename: "orb.html", mime: "text/html" },
-  types: { label: "Types", filename: "ai-orb.d.ts", mime: "text/plain" },
+  react: { label: "React", filename: "OrbyUI.tsx", mime: "text/plain" },
+  js: { label: "JavaScript", filename: "orby-ui.js", mime: "text/javascript" },
+  html: { label: "HTML", filename: "orby-ui.html", mime: "text/html" },
+  types: { label: "Types", filename: "orby-ui.d.ts", mime: "text/plain" },
 };
 
 

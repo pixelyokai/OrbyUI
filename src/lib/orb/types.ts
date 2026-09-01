@@ -47,9 +47,9 @@ export const NOISE_INDEX: Record<NoiseAlgo, number> = {
 export interface OrbConfig {
   style: OrbStyle;
   material: OrbMaterial;
-  colorA: string;
-  colorB: string;
-  colorC: string;
+  light: string;
+  body: string;
+  core: string;
   background: string;
   hue: number;
   intensity: number;
@@ -90,9 +90,9 @@ export const DEFAULT_MOOD_SPEED: Record<OrbMood, number> = {
 export const DEFAULT_CONFIG: OrbConfig = {
   style: "volume",
   material: "energy",
-  colorA: "#7ee0ff",
-  colorB: "#4f8cff",
-  colorC: "#0b1b3a",
+  light: "#7ee0ff",
+  body: "#4f8cff",
+  core: "#0b1b3a",
   background: "#08080a",
   hue: 0,
   intensity: 1,
@@ -177,9 +177,11 @@ export function sanitizeConfig(raw: unknown): OrbConfig {
       ORB_MATERIALS,
       DEFAULT_CONFIG.material,
     ),
-    colorA: asHex(p.colorA, DEFAULT_CONFIG.colorA),
-    colorB: asHex(p.colorB, DEFAULT_CONFIG.colorB),
-    colorC: asHex(p.colorC, DEFAULT_CONFIG.colorC),
+    // `colorA/B/C` are the pre-rename key names; still read so a config saved
+    // before the rename keeps its palette instead of silently resetting.
+    light: asHex(p.light ?? p.colorA, DEFAULT_CONFIG.light),
+    body: asHex(p.body ?? p.colorB, DEFAULT_CONFIG.body),
+    core: asHex(p.core ?? p.colorC, DEFAULT_CONFIG.core),
     background: asHex(p.background, DEFAULT_CONFIG.background),
     hue: asNum(p.hue, DEFAULT_CONFIG.hue, -180, 180),
     intensity: asNum(p.intensity, DEFAULT_CONFIG.intensity, 0, 3),
