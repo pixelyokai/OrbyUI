@@ -1,9 +1,9 @@
 # OrbyUI
 
+![OrbyUI](public/og.png)
+
 Design animated WebGL orbs in the browser, then export them as drop-in snippets
 with **no runtime dependencies**.
-
-![OrbyUI](public/og.png)
 
 Pick a style, material and mood, tune the shader by hand, and copy a
 self-contained component straight into your project. Nothing to install, no
