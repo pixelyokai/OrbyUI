@@ -1,0 +1,537 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens mirrored from the "Unique yew" Paper file.
+ * Roles below resolve to Tailwind-palette values (neutral / emerald) so the
+ * light and dark themes stay in lockstep with the design file.
+ */
+:root {
+  /* Surfaces: page → shell → stage / panel */
+  --page: #fafafa; /* neutral-50 */
+  --shell: #ffffff;
+  --stage: #ffffff;
+  --panel: #ffffff;
+
+  /* Hairlines */
+  --hair: rgb(24 24 27 / 8%);
+  --hair-strong: rgb(24 24 27 / 10%);
+
+  /* Text: title → row label → muted → icon */
+  --fg: #262626; /* neutral-800 */
+  --fg-row: #525252; /* neutral-600 */
+  --fg-muted: #737373; /* neutral-500 */
+  --fg-icon: #a1a1a1; /* neutral-400 */
+  --fg-chevron: #525252; /* neutral-600 */
+
+  /* Raised pill: active chip + active segmented tab */
+  --raised: #ffffff;
+  --raised-fg: #262626;
+  --raised-ring: rgb(24 24 27 / 10%);
+  --raised-shadow: 0 1px 2px rgb(24 24 27 / 16%);
+  --seg-bg: rgb(24 24 27 / 4%);
+
+  /* Hover fill for bare icon buttons */
+  --hover-fill: rgb(24 24 27 / 6%);
+  /* Switch hover: neutral when off, a darker emerald when on */
+  --switch-off-hover: #f5f5f5; /* neutral-100 */
+  --switch-on-hover: #009966; /* emerald-600 */
+  --header-border: rgb(24 24 27 / 6%);
+
+  /* Slider */
+  --track: rgb(24 24 27 / 12%);
+  --thumb: #ffffff;
+  --thumb-ring: rgb(24 24 27 / 24%);
+
+  /* Accent */
+  --accent-line: #00bc7d; /* emerald-500 */
+  --accent-on: #00d492; /* emerald-400 */
+  --accent-tint: #ecfdf5; /* emerald-50 */
+  --accent-tint-fg: #007a55; /* emerald-700 */
+  --switch-off: #fafafa;
+  --switch-knob-on: #e6f8ec;
+
+  /* Inverted button (Export) */
+  --invert: #262626;
+  --invert-fg: rgb(255 255 255 / 88%);
+
+  /* Tooltip + code surface */
+  --tip: #ffffff;
+  --tip-fg: #262626;
+  --tip-ring: rgb(39 39 42 / 10%);
+  --code: #fafafa;
+
+  /* Syntax tokens — tuned for contrast on --code */
+  --scroll-thumb: #d4d4d4;
+  --code-comment: #6e7781;
+  --code-string: #0a3069;
+  --code-keyword: #cf222e;
+  --code-number: #0550ae;
+  --code-fn: #8250df;
+  --code-tag: #116329;
+  --code-attr: #953800;
+
+  --skel-from: #f5f5f5;
+  --skel-to: #e5e5e5;
+}
+
+.dark {
+  --page: #000000;
+  --shell: #171717; /* neutral-900 */
+  --stage: #171717;
+  --panel: #262626; /* neutral-800 */
+
+  --hair: rgb(255 255 255 / 8%);
+  --hair-strong: rgb(255 255 255 / 10%);
+
+  --fg: #fafafa; /* neutral-50 */
+  --fg-row: #e5e5e5; /* neutral-200 */
+  --fg-muted: #a1a1a1; /* neutral-400 */
+  --fg-icon: #a1a1a1;
+  --fg-chevron: #e5e5e5;
+
+  --raised: #404040; /* neutral-700 */
+  --raised-fg: #fafafa;
+  --raised-ring: rgb(255 255 255 / 16%);
+  --raised-shadow: 0 1px 2px rgb(0 0 0 / 24%);
+  --seg-bg: rgb(255 255 255 / 8%);
+
+  --hover-fill: rgb(255 255 255 / 10%);
+  --switch-off-hover: #404040; /* neutral-700 */
+  --header-border: rgb(255 255 255 / 6%);
+
+  --track: rgb(255 255 255 / 12%);
+  --thumb: #ffffff;
+  --thumb-ring: rgb(255 255 255 / 24%);
+
+  --accent-tint: rgb(0 188 125 / 14%);
+  --accent-tint-fg: #5ee9b5; /* emerald-300 */
+  --switch-off: rgb(255 255 255 / 12%);
+
+  --invert: #ffffff;
+  --invert-fg: #262626;
+
+  --tip: #404040;
+  --tip-fg: #fafafa;
+  --tip-ring: rgb(255 255 255 / 8%);
+  --code: #404040;
+
+  --scroll-thumb: #525252;
+  --code-comment: #9aa4ae;
+  --code-string: #a5d6ff;
+  --code-keyword: #ff9492;
+  --code-number: #91cbff;
+  --code-fn: #dcbdfb;
+  --code-tag: #7ee787;
+  --code-attr: #ffb757;
+
+  --skel-from: #262626;
+  --skel-to: #404040;
+}
+
+@theme {
+  /* Semantic aliases used across the app */
+  --color-background: var(--stage);
+  --color-foreground: var(--fg);
+  --color-card: var(--panel);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--panel);
+  --color-popover-foreground: var(--fg);
+  --color-primary: var(--fg);
+  --color-primary-foreground: var(--panel);
+  --color-secondary: var(--seg-bg);
+  --color-secondary-foreground: var(--fg);
+  --color-muted: var(--seg-bg);
+  --color-muted-foreground: var(--fg-muted);
+  --color-accent: var(--seg-bg);
+  --color-accent-foreground: var(--fg);
+  --color-destructive: #e7000b;
+  --color-border: var(--hair);
+  --color-input: var(--hair);
+  --color-ring: var(--fg-muted);
+
+  /* Design-file roles */
+  --color-page: var(--page);
+  --color-shell: var(--shell);
+  --color-stage: var(--stage);
+  --color-panel: var(--panel);
+  --color-hair: var(--hair);
+  --color-hair-strong: var(--hair-strong);
+  --color-row: var(--fg-row);
+  --color-icon: var(--fg-icon);
+  --color-chevron: var(--fg-chevron);
+  --color-raised: var(--raised);
+  --color-raised-fg: var(--raised-fg);
+  --color-raised-ring: var(--raised-ring);
+  --color-seg: var(--seg-bg);
+  --color-track: var(--track);
+  --color-thumb: var(--thumb);
+  --color-thumb-ring: var(--thumb-ring);
+  --color-fill: var(--accent-line);
+  --color-accent-on: var(--accent-on);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-tint-fg: var(--accent-tint-fg);
+  --color-switch-off: var(--switch-off);
+  --color-switch-off-hover: var(--switch-off-hover);
+  --color-switch-on-hover: var(--switch-on-hover);
+  --color-switch-knob-on: var(--switch-knob-on);
+  --color-hover-fill: var(--hover-fill);
+  --color-invert: var(--invert);
+  --color-invert-fg: var(--invert-fg);
+  --color-tip: var(--tip);
+  --color-tip-fg: var(--tip-fg);
+  --color-tip-ring: var(--tip-ring);
+  --color-code: var(--code);
+  --color-header-border: var(--header-border);
+
+  --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo,
+    Consolas, "Liberation Mono", monospace;
+
+  /* Radii as used in the design file */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  --ease-soft: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --height-stage: min(46dvh, 26rem);
+  --width-panel: 424px;
+
+  --shadow-raised: var(--raised-shadow);
+  --shadow-tip:
+    0 1px 1px -0.5px rgb(0 0 0 / 4%), 0 3px 3px -1.5px rgb(0 0 0 / 4%),
+    0 6px 6px -3px rgb(0 0 0 / 4%), 0 12px 12px -6px rgb(0 0 0 / 4%);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--color-page);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/*
+ * Code-block scrollbar, from the "Scrollbar" frames in the Export artboards:
+ * a 4px rounded thumb inset 6px from the edge. The 16px track minus a 6px
+ * transparent border (clipped to the content box) is what produces the 4px.
+ */
+.code-scroll::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+.code-scroll::-webkit-scrollbar-track,
+.code-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.code-scroll::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  border: 6px solid transparent;
+  background-color: var(--scroll-thumb);
+  background-clip: content-box;
+}
+/*
+ * The snippets run ~12,000px, so a proportional thumb collapses to a sliver.
+ * Floor it at the lengths the Export artboards draw (80px / 58px).
+ */
+.code-scroll::-webkit-scrollbar-thumb:vertical {
+  min-height: 80px;
+}
+.code-scroll::-webkit-scrollbar-thumb:horizontal {
+  min-width: 58px;
+}
+/*
+ * Firefox only. Chrome supports `scrollbar-width` too and lets it override the
+ * ::-webkit-scrollbar sizing above, which collapsed the 16px track back to a
+ * thin overlay bar — so it must not be declared where the webkit rules apply.
+ */
+@supports not selector(::-webkit-scrollbar) {
+  .code-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+}
+
+/*
+ * Toast close button. Sonner absolutely positions it at the top-left corner and
+ * fades it in on hover; the Toasters artboards put it inline at the trailing
+ * edge, vertically centred, always visible. Overriding here rather than via
+ * `classNames` because sonner's own stylesheet wins on specificity.
+ */
+/*
+ * A modal Radix dialog sets `pointer-events: none` on <body>, which inherits
+ * into the toaster and makes the toast — and its close button — unclickable
+ * while the Export modal is open (the hit test lands on the dialog overlay).
+ * Not a z-index problem: the toaster already sits at z-index 999999999.
+ * Restoring `auto` on the toast itself is what Radix does for its own content.
+ * The wrapper stays `none` so it never blocks the page, and sonner's
+ * `[data-visible='false']` rule still wins on specificity for hidden toasts.
+ */
+[data-sonner-toaster] {
+  pointer-events: none;
+}
+[data-sonner-toast] {
+  pointer-events: auto;
+}
+
+[data-sonner-toast][data-styled="true"] [data-close-button] {
+  left: auto !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  opacity: 1 !important;
+  height: 20px;
+  width: 20px;
+  border: none !important;
+  border-radius: 6px;
+  background: transparent !important;
+  color: inherit !important;
+}
+[data-sonner-toast][data-styled="true"] [data-close-button] svg {
+  height: 16px;
+  width: 16px;
+}
+
+/*
+ * Export modal enter/exit. Radix keeps the node mounted on close until the CSS
+ * animation finishes, so the exit is driven purely by `data-state="closed"` —
+ * no JS timers to keep in sync.
+ *
+ * Only opacity and transform animate, both compositor properties, so the orb's
+ * WebGL loop keeps its frames. The content settles from 0.97 with a 4px rise;
+ * the exit is faster than the entry, which is the usual asymmetry — leaving
+ * should feel decisive, arriving should feel placed.
+ */
+@keyframes dialog-overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dialog-overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+/*
+ * Animate `translate` and `scale` as standalone properties, never `transform`.
+ * Tailwind v4's `-translate-x-1/2 -translate-y-1/2` centre the dialog via the
+ * `translate` property, so a keyframe that also centred it through `transform`
+ * applied the offset twice and the modal flew in from the top-left corner.
+ * Both ends are declared so the resting state is never inferred.
+ */
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    scale: 0.97;
+    translate: -50% calc(-50% + 4px);
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: -50% -50%;
+  }
+}
+@keyframes dialog-content-out {
+  from {
+    opacity: 1;
+    scale: 1;
+    translate: -50% -50%;
+  }
+  to {
+    opacity: 0;
+    scale: 0.98;
+    translate: -50% calc(-50% + 2px);
+  }
+}
+
+[data-dialog-overlay][data-state="open"] {
+  animation: dialog-overlay-in 200ms var(--ease-soft);
+}
+[data-dialog-overlay][data-state="closed"] {
+  animation: dialog-overlay-out 140ms var(--ease-soft) forwards;
+}
+[data-dialog-content][data-state="open"] {
+  animation: dialog-content-in 220ms var(--ease-drawer);
+}
+[data-dialog-content][data-state="closed"] {
+  animation: dialog-content-out 140ms var(--ease-soft) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-dialog-overlay],
+  [data-dialog-content] {
+    animation-duration: 1ms !important;
+  }
+}
+
+/* Export-dialog syntax tokens (see src/lib/highlight.ts) */
+.tok-comment {
+  color: var(--code-comment);
+  font-style: italic;
+}
+.tok-string {
+  color: var(--code-string);
+}
+.tok-keyword {
+  color: var(--code-keyword);
+}
+.tok-number {
+  color: var(--code-number);
+}
+.tok-fn {
+  color: var(--code-fn);
+}
+.tok-tag {
+  color: var(--code-tag);
+}
+.tok-attr {
+  color: var(--code-attr);
+}
+
+.skel {
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--skel-from) 0%, var(--skel-to) 50%, var(--skel-from) 100%);
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.35s ease-in-out infinite;
+}
+
+@keyframes skel-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel {
+    animation: none;
+    background: var(--skel-from);
+  }
+}
+
+.square-matrix {
+  display: grid;
+  grid-template-columns: repeat(5, 4px);
+  grid-template-rows: repeat(5, 4px);
+  gap: 2.5px;
+  width: 30px;
+  height: 30px;
+  color: #525252;
+}
+
+.dark .square-matrix {
+  color: #e5e5e5;
+}
+
+.square-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: currentColor;
+  animation: square-sweep 1.2s ease-in-out infinite;
+}
+
+@keyframes square-sweep {
+  0%,
+  100% {
+    opacity: 0.16;
+  }
+  42%,
+  58% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .square-dot {
+    animation: none;
+    opacity: 0.28;
+  }
+  .square-dot:nth-child(1),
+  .square-dot:nth-child(7),
+  .square-dot:nth-child(13),
+  .square-dot:nth-child(19),
+  .square-dot:nth-child(25) {
+    opacity: 0.95;
+  }
+}
+
+@keyframes chip-pop {
+  from {
+    transform: scale(0.94);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.chip-on {
+  animation: chip-pop 220ms var(--ease-soft);
+}
+
+.scroll-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-on {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 80ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  canvas {
+    transform: none !important;
+  }
+}

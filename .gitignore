@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.node_modules.lock
+
+# Build output / caches
+.vercel/
+.tanstack/
+dist/
+*.tsbuildinfo
+
+# Secrets — never commit. The platform injects DATABASE_URL and auth creds on
+# deploy; CENTRAL_LICENSE_KEY and friends belong in the user environment.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.npmrc
+
+# Local design sources and dev captures — large, not needed to build or run.
+# OrbyUI.fig alone is 56MB; git history is permanent, so keep it out.
+attachments/
+screenshots/
+artifacts/
+
+# Local version snapshots — git supersedes these once history exists.
+.snapshots/
+
+# Agent scaffolding. app-env.json is un-ignored below: the build reads it
+# (scripts/with-app-env.mjs) so it must be committed for reproducible builds.
+.grok/*
+!.grok/app-env.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

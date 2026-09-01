@@ -1,0 +1,28 @@
+# Line endings: LF everywhere — in the repository and in the working tree.
+#
+# Without this, Windows checkouts convert to CRLF and git warns on every add
+# ("LF will be replaced by CRLF"). Pinning eol=lf keeps the working tree and
+# the repo identical, so there is nothing to convert and no diff noise when
+# someone on macOS or Linux touches the same file.
+* text=auto eol=lf
+
+# Shell scripts and anything the Linux sandbox executes must keep LF, or the
+# shebang line carries a stray \r and the script fails to run.
+*.sh text eol=lf
+
+# Binary assets — never transform.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.mp4 binary
+*.fig binary
+*.zip binary
+
+# Generated — collapse in diffs and exclude from language stats.
+package-lock.json linguist-generated=true -diff
+src/routeTree.gen.ts linguist-generated=true -diff

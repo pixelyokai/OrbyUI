@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# No crawlable app state — the studio is entirely client-side.
+Disallow: /auth/
