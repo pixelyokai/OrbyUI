@@ -35,7 +35,9 @@ function StudioShell() {
   );
 
   return (
-    <div className="h-dvh overflow-hidden bg-page p-2">
+    // Fixed rather than h-dvh: a viewport-height block can still be scrolled
+    // on mobile (leaving a gap below it); a fixed one can't.
+    <div className="fixed inset-0 overflow-hidden overscroll-none bg-page p-2">
       <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-shell text-foreground shadow-[0_0_0_0.5px_var(--hair)] lg:flex-row">
         <Stage />
         <div className="min-h-0 flex-1 p-2 lg:w-[440px] lg:flex-none">

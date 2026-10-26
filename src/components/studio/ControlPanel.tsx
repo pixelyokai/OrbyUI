@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ColorField, SwitchRow } from "@/components/studio/ColorField";
 import {
   GlyphChevronDown,
@@ -79,6 +79,19 @@ export const ControlPanel = memo(function ControlPanel({
   const wrapRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const lenisRef = usePanelLenis(wrapRef, bodyRef);
+  const barRef = useRef<HTMLDivElement>(null);
+
+  // On narrow screens the jump-bar overflows; keep the active tab centred in it.
+  useEffect(() => {
+    const bar = barRef.current;
+    const btn = bar?.querySelector<HTMLElement>("[aria-current]");
+    if (!bar || !btn || bar.scrollWidth <= bar.clientWidth) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    bar.scrollTo({
+      left: btn.offsetLeft - (bar.clientWidth - btn.offsetWidth) / 2,
+      behavior: reduce ? "auto" : "smooth",
+    });
+  }, [tab]);
 
   const toggle = useCallback((id: string) => {
     setOpen((s) => ({ ...s, [id]: !s[id] }));
@@ -91,9 +104,17 @@ export const ControlPanel = memo(function ControlPanel({
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const el = bodyRef.current?.querySelector(`[data-section="${id}"]`) as HTMLElement | null;
+          const wrap = wrapRef.current;
           const lenis = lenisRef.current;
-          if (el && lenis) lenis.scrollTo(el, { offset: -8, duration: 0.7 });
-          else el?.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (!el || !wrap) return;
+          if (lenis) {
+            lenis.scrollTo(el, { offset: -8, duration: 0.7 });
+            return;
+          }
+          // Not scrollIntoView: that also scrolls the page on mobile.
+          const top = wrap.scrollTop + el.getBoundingClientRect().top - wrap.getBoundingClientRect().top - 8;
+          const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          wrap.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
         });
       });
     },
@@ -149,7 +170,10 @@ export const ControlPanel = memo(function ControlPanel({
         </div>
 
         {/* Segmented section jump-bar */}
-        <div className="flex items-center justify-between rounded-lg bg-seg p-0.5">
+        <div
+          ref={barRef}
+          className="relative flex items-center justify-between overflow-x-auto overscroll-x-contain rounded-lg bg-seg p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {TABS.map(({ id, label, Icon }) => {
             const on = tab === id;
             return (
@@ -160,7 +184,7 @@ export const ControlPanel = memo(function ControlPanel({
                   aria-label={label}
                   aria-current={on || undefined}
                   className={cn(
-                    "flex items-center justify-center gap-1 rounded-md px-2 py-1 transition-colors duration-200 ease-soft",
+                    "flex shrink-0 items-center justify-center gap-1 rounded-md px-2 py-1 transition-colors duration-200 ease-soft",
                     on
                       ? "bg-raised text-raised-fg shadow-raised ring-1 ring-raised-ring"
                       : "text-icon hover:text-foreground",
@@ -177,7 +201,12 @@ export const ControlPanel = memo(function ControlPanel({
         </div>
       </div>
 
-      <div ref={wrapRef} className="min-h-0 flex-1 overflow-hidden">
+      {/* Natively scrollable: Lenis only smooths the wheel, so touch (and
+          reduced motion, where Lenis is off) rely on overflow here. */}
+      <div
+        ref={wrapRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         <div ref={bodyRef}>
           <PanelSection
             id="style"
