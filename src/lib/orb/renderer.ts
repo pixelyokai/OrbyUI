@@ -1,7 +1,7 @@
 import { FluidSim, type IFluid } from "./fluid";
 import { acquireOrb, orbBudgetTight, releaseOrb } from "./live";
 import { effectiveUniforms } from "./mood";
-import { BLUR_SRC, COMP_SRC, FRAG_SRC, VERT_SRC } from "./shaders";
+import { BLUR_SRC, COMP_SRC, fragSrc, VERT_SRC } from "./shaders";
 import { hexToRgb, MATERIAL_INDEX, NOISE_INDEX, STYLE_INDEX, sanitizeConfig, type OrbConfig } from "./types";
 
 const VERTS = new Float32Array([-1, -1, 3, -1, -1, 3]);
@@ -29,6 +29,7 @@ function assertCompiled(gl: WebGLRenderingContext, shader: WebGLShader, kind: st
 }
 
 type Target = { fbo: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number };
+type OrbProgram = { prog: WebGLProgram; locs: Record<string, WebGLUniformLocation | null>; attrib: number };
 
 function makeTarget(gl: WebGLRenderingContext, w: number, h: number): Target | null {
   const tex = gl.createTexture();
@@ -69,7 +70,11 @@ function fillRgb(out: Float32Array, hex: string) {
 export class OrbRenderer {
   private gl: WebGLRenderingContext | null = null;
   private orbProg: WebGLProgram | null = null;
+  private orbNoise = -1;
+  private progs = new Map<number, OrbProgram>();
+  private failedNoise = new Set<number>();
   private pendingProg: WebGLProgram | null = null;
+  private pendingNoise = -1;
   private parallelLink = false;
   private blurProg: WebGLProgram | null = null;
   private compProg: WebGLProgram | null = null;
@@ -95,6 +100,9 @@ export class OrbRenderer {
   private last = 0;
   private ro?: ResizeObserver;
   private reduced = false;
+  private forcedReduced = false;
+  private motionQuery: MediaQueryList | null = null;
+  private onMotion?: () => void;
   private attrib = 0;
   private slowFrames = 0;
   private dprCap = 1.5;
@@ -119,15 +127,20 @@ export class OrbRenderer {
     this.config = sanitizeConfig(config);
     this.syncColors();
     this.onReady = opts?.onReady;
-    this.reduced =
-      typeof matchMedia === "function" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.motionQuery =
+      typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
+    this.reduced = Boolean(this.motionQuery?.matches);
+    this.onMotion = () => this.syncReduced();
+    this.motionQuery?.addEventListener("change", this.onMotion);
     this.onLost = (e: Event) => {
       e.preventDefault();
       this.stop();
       this.fluid = null;
       this.gl = null;
       this.orbProg = null;
+      this.orbNoise = -1;
+      this.progs.clear();
+      this.failedNoise.clear();
       this.pendingProg = null;
       this.blurProg = null;
       this.compProg = null;
@@ -193,6 +206,7 @@ export class OrbRenderer {
     if (this.software || orbBudgetTight()) {
       this.dprCap = 1;
       this.post = false;
+      this.forcedReduced = true;
       this.reduced = true;
     }
     this.buf = gl.createBuffer();
@@ -211,11 +225,12 @@ export class OrbRenderer {
     this.resize();
   }
 
-  private beginOrbProgram() {
+  private beginOrbProgram(noise: number) {
     const gl = this.gl;
-    if (!gl || this.pendingProg || this.orbProg) return;
+    if (!gl || this.pendingProg || this.progs.has(noise)) return;
+    this.pendingNoise = noise;
     const vs = compile(gl, gl.VERTEX_SHADER, VERT_SRC);
-    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG_SRC);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, fragSrc(noise));
     const program = gl.createProgram();
     if (!program) throw new Error("Unable to create program");
     gl.attachShader(program, vs);
@@ -227,10 +242,11 @@ export class OrbRenderer {
     gl.flush();
   }
 
+  /** True once the pending program (if any) has linked and been cached. */
   private finishOrbProgram(): boolean {
     const gl = this.gl;
     const program = this.pendingProg;
-    if (!gl || !program) return Boolean(this.orbProg);
+    if (!gl || !program) return true;
     if (this.parallelLink) {
       const done = gl.getProgramParameter(program, COMPLETION_KHR);
       if (!done) return false;
@@ -239,14 +255,10 @@ export class OrbRenderer {
       const log = gl.getProgramInfoLog(program) ?? "program link failed";
       gl.deleteProgram(program);
       this.pendingProg = null;
+      this.failedNoise.add(this.pendingNoise);
       throw new Error(log);
     }
-    this.orbProg = program;
     this.pendingProg = null;
-    this.attrib = gl.getAttribLocation(program, "position");
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
-    gl.enableVertexAttribArray(this.attrib);
-    gl.vertexAttribPointer(this.attrib, 2, gl.FLOAT, false, 0, 0);
 
     const orbNames = [
       "uResolution",
@@ -280,13 +292,23 @@ export class OrbRenderer {
       "uSplay",
       "uSpeed",
       "uFresnel",
-      "uNoiseType",
+      "uWorleyCells",
       "uFluid",
       "uHasFluid",
     ];
-    this.orbLocs = {};
-    for (const n of orbNames) this.orbLocs[n] = gl.getUniformLocation(program, n);
+    const locs: OrbProgram["locs"] = {};
+    for (const n of orbNames) locs[n] = gl.getUniformLocation(program, n);
+    this.progs.set(this.pendingNoise, { prog: program, locs, attrib: gl.getAttribLocation(program, "position") });
     return true;
+  }
+
+  private useOrbProgram(noise: number) {
+    const entry = this.progs.get(noise);
+    if (!entry) return;
+    this.orbProg = entry.prog;
+    this.orbLocs = entry.locs;
+    this.attrib = entry.attrib;
+    this.orbNoise = noise;
   }
 
   private setupPost() {
@@ -352,6 +374,12 @@ export class OrbRenderer {
     } catch {
       this.fluid = null;
     }
+  }
+
+  /** Follows live changes to prefers-reduced-motion; software / tight-budget stay reduced. */
+  private syncReduced() {
+    this.reduced = this.forcedReduced || Boolean(this.motionQuery?.matches);
+    this.post = !this.reduced && !this.software && Boolean(this.scene && this.bloomA && this.bloomB);
   }
 
   setConfig(config: OrbConfig) {
@@ -462,8 +490,8 @@ export class OrbRenderer {
     gl.uniform1f(this.orbLocs.uSplay, this.config.splay);
     gl.uniform1f(this.orbLocs.uSpeed, u.clock);
     gl.uniform1f(this.orbLocs.uFresnel, this.config.fresnel);
-    gl.uniform1f(this.orbLocs.uNoiseType, NOISE_INDEX[this.config.noiseAlgo] ?? 0);
-    const hasFluid = this.fluid?.bindDye(gl, 2) ? 1 : 0;
+    gl.uniform1f(this.orbLocs.uWorleyCells, 27);
+    const hasFluid = !this.reduced && this.fluid?.bindDye(gl, 2) ? 1 : 0;
     if (!hasFluid) {
       gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, this.dummyTex);
@@ -503,18 +531,23 @@ export class OrbRenderer {
       return;
     }
 
-    if (!this.orbProg) {
+    // Programs are compiled per noise type; keep drawing the current one
+    // while a newly selected type links in the background.
+    const noise = NOISE_INDEX[this.config.noiseAlgo] ?? 0;
+    if (this.orbNoise !== noise && !this.failedNoise.has(noise)) {
       try {
-        if (!this.pendingProg) this.beginOrbProgram();
-        if (!this.finishOrbProgram()) {
-          if (schedule && this.running) this.raf = requestAnimationFrame(this.draw);
-          return;
-        }
+        if (!this.progs.has(noise) && !this.pendingProg) this.beginOrbProgram(noise);
+        this.finishOrbProgram();
+        this.useOrbProgram(noise);
       } catch (err) {
         console.error(err);
-        this.stop();
-        return;
+        this.failedNoise.add(this.pendingNoise);
       }
+    }
+    if (!this.orbProg) {
+      if (this.failedNoise.has(noise)) this.stop();
+      else if (schedule && this.running) this.raf = requestAnimationFrame(this.draw);
+      return;
     }
 
     const t = now * 0.001;
@@ -622,13 +655,14 @@ export class OrbRenderer {
     if (this.onLost) this.canvas.removeEventListener("webglcontextlost", this.onLost);
     if (this.onRestored) this.canvas.removeEventListener("webglcontextrestored", this.onRestored);
     if (this.onVis) document.removeEventListener("visibilitychange", this.onVis);
+    if (this.onMotion) this.motionQuery?.removeEventListener("change", this.onMotion);
     const gl = this.gl;
     if (gl) {
       destroyTarget(gl, this.scene);
       destroyTarget(gl, this.bloomA);
       destroyTarget(gl, this.bloomB);
       if (this.buf) gl.deleteBuffer(this.buf);
-      if (this.orbProg) gl.deleteProgram(this.orbProg);
+      for (const { prog } of this.progs.values()) gl.deleteProgram(prog);
       if (this.pendingProg) gl.deleteProgram(this.pendingProg);
       if (this.blurProg) gl.deleteProgram(this.blurProg);
       if (this.compProg) gl.deleteProgram(this.compProg);
@@ -639,6 +673,7 @@ export class OrbRenderer {
     this.gl = null;
     releaseOrb();
     this.orbProg = null;
+    this.progs.clear();
     this.pendingProg = null;
     this.blurProg = null;
     this.compProg = null;

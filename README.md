@@ -23,6 +23,7 @@ package to track. The export is a single file.
   dispersion, fresnel, noise algorithm, iridescence, pointer follow
 - **Motion control** — speed, rotation, distortion, noise speed
 - **Your settings persist** to `localStorage` and rehydrate on return
+- **Reduced motion** — exports honour `prefers-reduced-motion` like the studio, with a `reducedMotion` override
 
 ### Export formats
 
@@ -78,7 +79,7 @@ import { OrbyUI } from "./components/OrbyUI";
 </div>
 ```
 
-4. **Optional props:** `mood`, `light`, `body`, `core`, plus any other config key.
+4. **Optional props:** `mood`, `light`, `body`, `core`, `reducedMotion`, plus any other config key.
 5. **Next.js:** add `"use client"` at the top of `OrbyUI.tsx`.
 6. **States:** `<OrbyUI />` on its own is enough — don't pass `mood`. Don't strip
    `MOOD_MUL` / `easePulse` or the pulse block unless you also replace them with
@@ -123,6 +124,40 @@ Declarations only - no runtime.
    them. Don't delete `OrbMood` / `setMood` from the `.d.ts` unless you also
    removed them from the JS.
 
+### Reduced motion
+
+The studio and every export (React, JavaScript, HTML) respect
+`prefers-reduced-motion`, and both pick up changes to the OS setting live,
+without a reload. When reduced motion is active the orb:
+
+- runs its clock at ~12% speed (rotation, pulse and noise all slow down)
+- skips the fluid simulation
+- skips the bloom post-process
+
+The `reducedMotion` option controls this and is already in the exported config:
+
+| Value | Behaviour |
+| --- | --- |
+| `"system"` (default) | Follows the OS setting and **updates live** when it changes |
+| `"reduce"` | Always reduced, whatever the OS says |
+| `"no-preference"` | Always full motion, ignoring the OS setting |
+
+```tsx
+<OrbyUI reducedMotion="reduce" />
+```
+
+```js
+const orb = createOrbyUI(el, { reducedMotion: "system" });
+orb.setConfig({ reducedMotion: "no-preference" }); // switch at runtime
+```
+
+Only override the user's setting with `"no-preference"` if you have a good
+reason, such as an explicit in-app motion toggle.
+
+There's deliberately no studio control for this: exports always start at
+`"system"`, so the orb respects each visitor's own setting. To force a value,
+change the `reducedMotion` line in the exported code.
+
 ---
 
 ## How it's built
@@ -146,6 +181,17 @@ src/
 
 **The orb runs entirely client-side.** No API, no database, no user input
 reaches a server. The shader executes on the visitor's GPU.
+
+**One shader per noise algorithm.** The fragment shader is compiled with a
+`#define NOISE_TYPE` for the selected noise (`fragSrc()` in
+`src/lib/orb/shaders.ts`) rather than branching on a uniform. On Windows,
+Chrome and Edge translate WebGL to Direct3D, which inlines every noise call and
+unrolls every loop. A single shader holding all six algorithms took 11-14 s to
+compile on a first visit; each specialised shader compiles in about 0.3-0.6 s.
+The studio compiles a newly selected noise type in the background and caches
+each one; exports compile only the one they use. Keep this in mind when
+editing the shader: avoid runtime branches that pull large functions or
+fixed-length loops into the shader.
 
 
 

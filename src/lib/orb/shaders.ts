@@ -6,7 +6,16 @@ void main() {
 }
 `;
 
+/**
+ * The fragment shader is compiled once per noise algorithm (NOISE_TYPE) rather
+ * than branching on a uniform: ANGLE's D3D backend inlines every noise call and
+ * unrolls every loop, so one uber-shader took 10+ seconds to link on Windows.
+ * Build the source with `fragSrc()`.
+ */
 export const FRAG_SRC = `
+#ifndef NOISE_TYPE
+#define NOISE_TYPE 0
+#endif
 precision highp float;
 
 uniform vec2 uResolution;
@@ -40,7 +49,7 @@ uniform float uFrost;
 uniform float uSplay;
 uniform float uSpeed;
 uniform float uFresnel;
-uniform float uNoiseType;
+uniform float uWorleyCells;
 uniform sampler2D uFluid;
 uniform float uHasFluid;
 
@@ -148,6 +157,8 @@ float wnoise(vec3 p) {
   vec3 f = fract(p);
   float md = 8.0;
   for (int n = 0; n < 27; n++) {
+    // Uniform bound (always 27) keeps the compiler from unrolling the loop.
+    if (float(n) >= uWorleyCells) break;
     float fn = float(n);
     vec3 g = vec3(mod(fn, 3.0), mod(floor(fn / 3.0), 3.0), floor(fn / 9.0)) - 1.0;
     vec3 o = hash33(i + g) * 0.5 + 0.5;
@@ -158,12 +169,17 @@ float wnoise(vec3 p) {
 }
 
 float primNoise(vec3 p) {
-  if (uNoiseType < 0.5) return snoise(p);
-  if (uNoiseType < 1.5) return vnoise(p);
-  if (uNoiseType < 2.5) return pnoise(p);
-  if (uNoiseType < 3.5) return wnoise(p);
-  if (uNoiseType < 4.5) return 1.0 - 2.0 * abs(snoise(p));
+#if NOISE_TYPE == 1
+  return vnoise(p);
+#elif NOISE_TYPE == 2
+  return pnoise(p);
+#elif NOISE_TYPE == 3
+  return wnoise(p);
+#elif NOISE_TYPE == 4
+  return 1.0 - 2.0 * abs(snoise(p));
+#else
   return snoise(p);
+#endif
 }
 
 float fbm(vec3 p) {
@@ -179,10 +195,15 @@ float fbm(vec3 p) {
 }
 
 float noise3(vec3 p) {
-  if (uNoiseType > 4.5) return fbm(p * 0.85);
-  if (uNoiseType > 3.5 && uNoiseType < 4.5) return primNoise(p * 1.15);
-  if (uNoiseType > 2.5 && uNoiseType < 3.5) return primNoise(p * 1.35);
+#if NOISE_TYPE == 5
+  return fbm(p * 0.85);
+#elif NOISE_TYPE == 4
+  return primNoise(p * 1.15);
+#elif NOISE_TYPE == 3
+  return primNoise(p * 1.35);
+#else
   return primNoise(p);
+#endif
 }
 
 vec2 curlFluid(vec3 p) {
@@ -522,6 +543,11 @@ void main() {
   gl_FragColor = vec4(col, sphereMask);
 }
 `;
+
+export function fragSrc(noiseType: number) {
+  return `#define NOISE_TYPE ${noiseType | 0}
+` + FRAG_SRC;
+}
 
 export const BLUR_SRC = `
 precision highp float;

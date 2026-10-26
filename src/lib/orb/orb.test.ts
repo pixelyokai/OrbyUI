@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { moodAt, effectiveUniforms } from "./mood.ts";
+import { FRAG_SRC, fragSrc } from "./shaders.ts";
 import { DEFAULT_CONFIG, hexToRgb, sanitizeConfig } from "./types.ts";
 describe("hexToRgb", () => {
   it("parses 6-digit hex", () => {
@@ -63,5 +64,12 @@ describe("speed clock", () => {
     const b = effectiveUniforms({ ...DEFAULT_CONFIG, speed: 2, mood: "idle", moodSpeed: { ...DEFAULT_CONFIG.moodSpeed, idle: 0.5 } }, 0, 0);
     assert.equal(a.clock, 1);
     assert.equal(b.clock, 1);
+  });
+});
+
+describe("fragSrc", () => {
+  it("specializes the fragment shader per noise type instead of branching on a uniform", () => {
+    assert.ok(fragSrc(3).startsWith("#define NOISE_TYPE 3\n"));
+    assert.equal(FRAG_SRC.includes("uNoiseType"), false);
   });
 });

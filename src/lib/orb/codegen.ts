@@ -37,6 +37,7 @@ function lit(config: OrbConfig) {
   moodSpeed: ${JSON.stringify(config.moodSpeed)},
   interactivity: ${config.interactivity},
   mood: ${JSON.stringify(config.mood)},
+  reducedMotion: "system", // "system" | "reduce" | "no-preference"
 }`;
 }
 
@@ -87,6 +88,7 @@ var MOOD_OK = { idle:1, listening:1, thinking:1, speaking:1 };
 var NOISE_OK = { simplex:1, value:1, perlin:1, worley:1, ridged:1, fbm:1 };
 var EASE_OK = { sine:1, linear:1, cubic:1, quart:1, expo:1, back:1, circ:1 };
 var SPRING_OK = { none:1, smooth:1, snappy:1, bouncy:1, gentle:1, wobbly:1 };
+var RM_OK = { system:1, reduce:1, "no-preference":1 };
 function clampNum(v, d, lo, hi) {
   var n = typeof v === "number" ? v : Number(v);
   if (!isFinite(n)) return d;
@@ -103,6 +105,7 @@ function applyPartial(cfg, partial) {
   if (next.noiseAlgo && NOISE_OK[next.noiseAlgo]) cfg.noiseAlgo = next.noiseAlgo;
   if (next.easing && EASE_OK[next.easing]) cfg.easing = next.easing;
   if (next.spring && SPRING_OK[next.spring]) cfg.spring = next.spring;
+  if (next.reducedMotion && RM_OK[next.reducedMotion]) cfg.reducedMotion = next.reducedMotion;
   ["light","body","core","background"].forEach(function (k) {
     if (typeof next[k] === "string" && HEX_OK.test(next[k])) cfg[k] = next[k];
   });
@@ -192,7 +195,7 @@ export function createOrbyUI(el, options) {
     frost: 0, splay: 0.18, speed: 1, fresnel: 0.85, matAmount: 1, noiseAlgo: "simplex",
     easing: "sine", spring: "smooth",
     moodSpeed: { idle: 1, listening: 1, thinking: 1.15, speaking: 1 },
-    interactivity: true, mood: "idle",
+    interactivity: true, mood: "idle", reducedMotion: "system",
   }, options || {});
 
   function cssFallback() {
@@ -217,14 +220,39 @@ export function createOrbyUI(el, options) {
   const gl = canvas.getContext("webgl2", opts) || canvas.getContext("webgl", opts);
   if (!gl) return cssFallback();
 
-  let orbProg, blurProg, compProg;
+  const ORB_UNIFORMS = [
+    "uResolution","uTime","uColorA","uColorB","uColorC","uHue",
+    "uIntensity","uGlow","uBloom","uScale","uInnerRadius","uNoiseScale","uNoiseSpeed",
+    "uRot","uDistortion","uIridescence","uMouse","uHover","uStyle","uPulse","uGrain","uMaterial","uMatAmt","uAberration","uRefraction","uDepth","uDispersion","uFrost","uSplay","uSpeed","uFresnel","uWorleyCells","uFluid","uHasFluid",
+  ];
+  // One program per noise type: a single shader branching on all of them
+  // takes seconds to compile on Windows (ANGLE / D3D).
+  const orbProgs = {};
+  let orbProg = null, loc = {}, orbNoise = -1;
+  function useNoise(n) {
+    if (n === orbNoise) return true;
+    if (orbProgs[n] === null) return false;
+    if (!orbProgs[n]) {
+      let prog;
+      try { prog = link(gl, VERT, "#define NOISE_TYPE " + n + "\\n" + FRAG); } catch (err) { orbProgs[n] = null; return false; }
+      const l = {};
+      ORB_UNIFORMS.forEach((u) => { l[u] = gl.getUniformLocation(prog, u); });
+      orbProgs[n] = { prog: prog, loc: l };
+    }
+    orbProg = orbProgs[n].prog;
+    loc = orbProgs[n].loc;
+    orbNoise = n;
+    return true;
+  }
+
+  let blurProg, compProg;
   try {
-    orbProg = link(gl, VERT, FRAG);
     blurProg = link(gl, VERT, BLUR);
     compProg = link(gl, VERT, COMP);
   } catch (err) {
     return cssFallback();
   }
+  if (!useNoise(NOISE_INDEX[config.noiseAlgo] || 0)) return cssFallback();
   const buf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
@@ -236,12 +264,6 @@ export function createOrbyUI(el, options) {
   }
   __orbyLive += 1;
 
-  const loc = {};
-  [
-    "uResolution","uTime","uColorA","uColorB","uColorC","uHue",
-    "uIntensity","uGlow","uBloom","uScale","uInnerRadius","uNoiseScale","uNoiseSpeed",
-    "uRot","uDistortion","uIridescence","uMouse","uHover","uStyle","uPulse","uGrain","uMaterial","uMatAmt","uAberration","uRefraction","uDepth","uDispersion","uFrost","uSplay","uSpeed","uFresnel","uNoiseType","uFluid","uHasFluid",
-  ].forEach((n) => { loc[n] = gl.getUniformLocation(orbProg, n); });
   const bLoc = {
     uTex: gl.getUniformLocation(blurProg, "uTex"),
     uOutRes: gl.getUniformLocation(blurProg, "uOutRes"),
@@ -270,7 +292,10 @@ export function createOrbyUI(el, options) {
   let hasFluid = 0;
   let fluidStep = function () {};
   let fluidDestroy = function () {};
-  (function setupFluid() {
+  let fluidTried = false;
+  function setupFluid() {
+    if (fluidTried) return;
+    fluidTried = true;
     if (__orbyLive > 4) return;
     const is2 = typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext;
     if (!is2) return;
@@ -365,7 +390,21 @@ export function createOrbyUI(el, options) {
       gl2.deleteTexture(dyeB.tex); gl2.deleteFramebuffer(dyeB.fbo);
       gl2.deleteProgram(adv); gl2.deleteProgram(spl);
     };
-  })();
+  }
+
+  // Mirrors the studio: reduced motion slows time and skips the fluid sim and bloom.
+  const rmQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  let reduced = false;
+  function syncReduced() {
+    const mode = config.reducedMotion;
+    reduced = mode === "reduce" || (mode !== "no-preference" && !!(rmQuery && rmQuery.matches));
+    if (!reduced) setupFluid();
+  }
+  syncReduced();
+  if (rmQuery) {
+    if (rmQuery.addEventListener) rmQuery.addEventListener("change", syncReduced);
+    else if (rmQuery.addListener) rmQuery.addListener(syncReduced);
+  }
 
   let scene = null, bloomA = null, bloomB = null, post = true, resizeQueued = false;
   let time = 0, rot = 0, hover = 0, targetHover = 0, last = 0, raf = 0, running = true;
@@ -424,6 +463,7 @@ export function createOrbyUI(el, options) {
     const eased = easePulse(ping, config.easing || "sine", config.spring || "none");
     const bias = m.pulseBias == null ? 0.5 : m.pulseBias;
     const pulse = 1 + (m.pulseAmp || 0) * (bias + (1 - bias) * eased);
+    useNoise(NOISE_INDEX[config.noiseAlgo] || 0);
     gl.useProgram(orbProg);
     bindAttrib();
     gl.uniform2f(loc.uResolution, canvas.width, canvas.height);
@@ -457,11 +497,12 @@ export function createOrbyUI(el, options) {
     gl.uniform1f(loc.uSplay, config.splay || 0);
     gl.uniform1f(loc.uSpeed, clock);
     gl.uniform1f(loc.uFresnel, config.fresnel == null ? 0.85 : config.fresnel);
-    gl.uniform1f(loc.uNoiseType, NOISE_INDEX[config.noiseAlgo] || 0);
+    gl.uniform1f(loc.uWorleyCells, 27);
     gl.activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, dyeTex);
+    const fluidOn = hasFluid && !reduced ? 1 : 0;
+    gl.bindTexture(gl.TEXTURE_2D, fluidOn ? dyeTex : dummy);
     gl.uniform1i(loc.uFluid, 2);
-    gl.uniform1f(loc.uHasFluid, hasFluid);
+    gl.uniform1f(loc.uHasFluid, fluidOn);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
@@ -482,8 +523,9 @@ export function createOrbyUI(el, options) {
   function draw(now, schedule) {
     if (!running && schedule !== false) return;
     const t = now * 0.001;
-    const dt = last ? Math.min(t - last, 0.1) : 0.016;
+    let dt = last ? Math.min(t - last, 0.1) : 0.016;
     last = t;
+    if (reduced) dt *= 0.12;
     if (document.visibilityState === "hidden") {
       if (schedule !== false && running) raf = requestAnimationFrame(function (t) { draw(t, true); });
       return;
@@ -496,10 +538,10 @@ export function createOrbyUI(el, options) {
     hover += (targetHover - hover) * k;
     mouse.x += (targetMouse.x - mouse.x) * k;
     mouse.y += (targetMouse.y - mouse.y) * k;
-    if (hasFluid) fluidStep(dt, config.noiseSpeed * clock);
+    if (hasFluid && !reduced) fluidStep(dt, config.noiseSpeed * clock);
     const w = canvas.width, h = canvas.height;
 
-    if (post && scene && bloomA && bloomB) {
+    if (post && !reduced && scene && bloomA && bloomB) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, scene.fbo);
       gl.viewport(0, 0, w, h);
       gl.clearColor(0, 0, 0, 0);
@@ -546,7 +588,7 @@ export function createOrbyUI(el, options) {
 
   return {
     setMood(mood) { if (MOOD_OK[mood]) config.mood = mood; },
-    setConfig(partial) { applyPartial(config, partial); },
+    setConfig(partial) { applyPartial(config, partial); syncReduced(); },
     capture() {
       draw(performance.now(), false);
       try { return canvas.toDataURL("image/png"); } catch (e) { return null; }
@@ -560,13 +602,17 @@ export function createOrbyUI(el, options) {
       canvas.removeEventListener("webglcontextlost", onLost);
       canvas.removeEventListener("webglcontextrestored", onRestored);
       document.removeEventListener("visibilitychange", onVis);
+      if (rmQuery) {
+        if (rmQuery.removeEventListener) rmQuery.removeEventListener("change", syncReduced);
+        else if (rmQuery.removeListener) rmQuery.removeListener(syncReduced);
+      }
       fluidDestroy();
       [scene, bloomA, bloomB].forEach(function (t) {
         if (!t) return;
         gl.deleteTexture(t.tex);
         gl.deleteFramebuffer(t.fbo);
       });
-      gl.deleteProgram(orbProg);
+      Object.keys(orbProgs).forEach(function (n) { if (orbProgs[n]) gl.deleteProgram(orbProgs[n].prog); });
       gl.deleteProgram(blurProg);
       gl.deleteProgram(compProg);
       gl.deleteBuffer(buf);
@@ -586,6 +632,7 @@ const orb = mount ? createOrbyUI(mount, ${lit(config)}) : null;
 
 // orb.setMood("listening" | "thinking" | "speaking" | "idle");
 // orb.setConfig({ light: "#7ee0ff" });
+// orb.setConfig({ reducedMotion: "reduce" }); // "system" | "reduce" | "no-preference"
 `;
 }
 
@@ -602,6 +649,7 @@ export type OrbyUIProps = {
   light?: string;
   body?: string;
   core?: string;
+  reducedMotion?: "system" | "reduce" | "no-preference";
   [key: string]: unknown;
 };
 
@@ -644,7 +692,7 @@ export function OrbyUI({
 
 /* Usage:
   <div style={{ width: 420, height: 420 }}>
-    <OrbyUI mood="idle" light="${config.light}" body="${config.body}" core="${config.core}" />
+    <OrbyUI mood="idle" reducedMotion="system" light="${config.light}" body="${config.body}" core="${config.core}" />
   </div>
 */
 `;
@@ -686,6 +734,7 @@ export type OrbMaterial =
 export type NoiseAlgo = "simplex" | "value" | "perlin" | "worley" | "ridged" | "fbm";
 export type EasingId = "sine" | "linear" | "cubic" | "quart" | "expo" | "back" | "circ";
 export type SpringId = "none" | "smooth" | "snappy" | "bouncy" | "gentle" | "wobbly";
+export type ReducedMotion = "system" | "reduce" | "no-preference";
 
 export interface OrbyUIConfig {
   style?: OrbStyle;
@@ -721,6 +770,8 @@ export interface OrbyUIConfig {
   moodSpeed?: Record<OrbMood, number>;
   interactivity?: boolean;
   mood?: OrbMood;
+  /** "system" (default) follows prefers-reduced-motion live; "reduce" / "no-preference" force it. */
+  reducedMotion?: ReducedMotion;
 }
 
 export interface OrbyUIHandle {
