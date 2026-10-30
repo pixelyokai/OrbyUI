@@ -47,29 +47,34 @@ export const ColorField = memo(function ColorField({
           </Tooltip>
         ) : null}
       </span>
-      {/* The colour input stays rendered at 0×0 — browsers ignore .click() on a
-          display:none input. Both children stop propagation: the input to avoid
-          recursing into this handler, the hex field to stay typeable. */}
+      {/* The colour input is transparent but still laid out over the swatch —
+          browsers ignore .click() on a display:none input, and Chromium anchors
+          the native picker to the input's own box, so a 0×0 input away from the
+          swatch opened the popup at the corner of the panel instead. Both
+          children stop propagation: the input to avoid recursing into this
+          handler, the hex field to stay typeable. */}
       <div
         onClick={() => colorRef.current?.click()}
         className="flex cursor-pointer items-center gap-2 rounded-lg border border-hair-strong bg-panel px-2 py-1.5 transition-colors duration-150 ease-soft hover:border-thumb-ring"
       >
-        <span
-          className="size-4 shrink-0 rounded-full border border-thumb-ring"
-          style={{ backgroundColor: value }}
-          aria-hidden
-        />
-        <input
-          ref={colorRef}
-          type="color"
-          value={normalizeHex(value)}
-          onInput={(e) => onChange(e.currentTarget.value)}
-          onChange={(e) => onChange(e.currentTarget.value)}
-          onClick={(e) => e.stopPropagation()}
-          className="absolute size-0 opacity-0"
-          tabIndex={-1}
-          aria-label={`${label} colour picker`}
-        />
+        <span className="relative size-4 shrink-0">
+          <span
+            className="absolute inset-0 rounded-full border border-thumb-ring"
+            style={{ backgroundColor: value }}
+            aria-hidden
+          />
+          <input
+            ref={colorRef}
+            type="color"
+            value={normalizeHex(value)}
+            onInput={(e) => onChange(e.currentTarget.value)}
+            onChange={(e) => onChange(e.currentTarget.value)}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute inset-0 size-full cursor-pointer opacity-0"
+            tabIndex={-1}
+            aria-label={`${label} colour picker`}
+          />
+        </span>
         <input
           value={draft}
           onChange={(e) => commitText(e.target.value)}
